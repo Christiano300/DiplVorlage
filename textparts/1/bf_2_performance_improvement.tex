@@ -241,17 +241,7 @@ Simple-8b character-based encoded:
 {10: [1672531200], 2: [60, 60, 60, 60], 0: [0, 0, 0]}
 \end{verbatim}
 
-\begin{tcolorbox}[
-    colback=red!5!white, % Background color (light red)
-    colframe=red!75!black, % Frame color (dark red)
-    title=\textbf{Important Simplification Note}, % Title in the box header
-    fonttitle=\bfseries\sffamily, % Font style for the title
-    boxsep=5pt, % Space between the box and surrounding text
-    arc=4pt, % Rounded corners
-    boxrule=0.5pt % Thickness of the frame
-  ]
-  The simplified example provided uses decimal digits and an abstract block structure for demonstrative purposes. Please remember that the actual Simple-8b algorithm operates on fixed 64-bit words, where a 4-bit selector and 60 bits of payload are used to pack the resulting \textbf{binary} integers efficiently.
-\end{tcolorbox}
+
 
 \subsection{How the compression algorithm works in detail}
 
@@ -526,11 +516,6 @@ TimescaleDB have built-in support for precomputed aggregates, which can
 automatically manage the storage and updating of these aggregates without the
 need for manual intervention.
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=1\textwidth]{images/cloudflare-benchmark-precomputed-aggregations.png}
-  \caption{Performance efficiency gained through pre-computed aggregations.}~\label{fig:precomputed_aggregations}
-\end{figure}
 
 \subsection{TimescaleDB's implementation of precomputed aggregates}
 
@@ -556,11 +541,7 @@ on-the-fly aggregation over the small, unprocessed tail of raw data. The result
 is presented to the caller as a single, consistent view with no staleness for
 any time range.\cite{TimescaleDB:05}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=1\textwidth]{images/tigerdata-continuous-aggregate.png}
-  \caption{TimescaleDB's implementation of continuous aggregations\cite{TimescaleDB:09}}\label{fig:continuous-aggregates}
-\end{figure}
+
 
 A continuous aggregate is defined with a standard SQL \texttt{CREATE
   MATERIALIZED VIEW} statement extended with the \texttt{timescaledb.continuous}
@@ -605,11 +586,7 @@ mechanism removes the need for any external orchestration: schema changes,
 refresh intervals, and data-retention policies are all managed inside the
 database, eliminating a whole tier of infrastructure.\cite{TimescaleDB:05}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=\textwidth]{images/cloudflare-benchmark.png}
-  \caption{Cloudflare benchmark results: query time improvement after migrating to TimescaleDB continuous aggregates\cite{TimescaleDB:05}}\label{fig:cloudflare-benchmark}
-\end{figure}
+
 
 Beyond serving dashboard visualizations, continuous aggregates compose
 fluidly with \\ TimescaleDB's other analytical functions.~\cite{TimescaleDB:06}

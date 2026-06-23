@@ -49,8 +49,8 @@
 \newcommand{\webref}[1]{\href{#1}{\url{#1}}}
 \newcommand{\cdline}[1]{\textbf{Line #1}}
 \newcommand{\cdlines}[1]{\textbf{Lines #1}}
-\newcommand{\boldtitle}[1]{\large {\textbf #1}\\[0.5em]}
-
+\newcommand{\boldtitle}[1]{{\large \textbf{#1}}\\[0.5em]}
+ 
 %-------------------------------------------------------------------------------
 % Formatierung
 %-------------------------------------------------------------------------------
@@ -184,53 +184,29 @@
 %--------------------------------------------------------------------------
 
 \include{textparts/objective.tex}
-% lucas diploma
-\part[Intelligent sensor data acquisition and methods for data preparation for reuse]
-{Intelligent sensor data acquisition and methods for data preparation for reuse\\\large by Luca Reisenbichler}
-\include{textparts/luca/lr_2_sensors}
-\include{textparts/luca/lr_3_data-sources}
-\include{textparts/luca/lr_4_data-measuring}
-\include{textparts/luca/lr_5_problems}
-\include{textparts/luca/lr_6_preperation}
-\include{textparts/luca/lr_7_implementation}
-\include{textparts/luca/lr_8_usecase}
-\include{textparts/luca/lr_9_evaluation}
-\include{textparts/luca/lr_10_context}
-% benjamins diploma
-\part[Evaluation and optimization of time series databases]
-{Evaluation and optimization of time series databases\\\large by Benjamin Friedl}
-\include{textparts/benjamin/bf_0_introduction}
-\include{textparts/benjamin/bf_1_overview.tex}
-\include{textparts/benjamin/bf_2_performance_improvement}
-\include{textparts/benjamin/bf_3_ts_cloud}
-\include{textparts/benjamin/bf_5_performance_measurement}
-\include{textparts/benjamin/bf_6_benchmarking}
-\include{textparts/benjamin/bf_7_analytics}
-\include{textparts/benjamin/bf_8_project-context}
-% christians diploma
-\part[Theory of Weighted Value Distribution Maps including the comparison of Spatiotemporal Smoothing Methods and a practical implementation using WebGL]
-{Theory of Weighted Value Distribution Maps including the comparison of Spatiotemporal Smoothing Methods and a practical implementation using WebGL\\\large by Christian Patzl}
-\include{textparts/christian/cp_1_introduction}
-\include{textparts/christian/cp_2_theory}
-\include{textparts/christian/cp_3_implementation}
-\include{textparts/christian/cp_4_project-context}
-%tobias diploma
-\part[3D representation of map services]
-{3D representation of map services\\\large by Tobias Eisinger}
-\include{textparts/tobias/te_2_math_fundamentals}
-\include{textparts/tobias/te_3_geospatial}
-\include{textparts/tobias/te_4_frameworks}
-\include{textparts/tobias/te_5_project}
-% valentins diploma
-\part[A comparative study of modern mobile application development frameworks]
-{A comparative study of modern mobile application development frameworks\\\large by Valentin Hacker}
-\include{textparts/valentin/vh_why_frameworks_are_needed}
-\include{textparts/valentin/vh_frameworks_introduction}
-\include{textparts/valentin/vh_dx_comparison}
-\include{textparts/valentin/vh_performance_comparison}
-\include{textparts/valentin/vh_maturity}
-\include{textparts/valentin/vh_security}
-\include{textparts/valentin/vh_integration}
+% 1's diploma thesis
+\part[First thesis title]
+{First thesis title\\\large by Person 1}
+\include{textparts/2/lr_2_sensors}
+\include{textparts/2/lr_3_data-sources}
+\include{textparts/2/lr_4_data-measuring}
+\include{textparts/2/lr_5_problems}
+\include{textparts/2/lr_6_preperation}
+\include{textparts/2/lr_7_implementation}
+\include{textparts/2/lr_8_usecase}
+\include{textparts/2/lr_9_evaluation}
+\include{textparts/2/lr_10_context}
+% 2's diploma thesis
+\part[Second thesis title]
+{Second thesis title\\\large by Person 2}
+\include{textparts/1/bf_0_introduction}
+\include{textparts/1/bf_1_overview.tex}
+\include{textparts/1/bf_2_performance_improvement}
+\include{textparts/1/bf_3_ts_cloud}
+\include{textparts/1/bf_5_performance_measurement}
+\include{textparts/1/bf_6_benchmarking}
+\include{textparts/1/bf_7_analytics}
+\include{textparts/1/bf_8_project-context}
 
 \input{textparts/conclusion}
 
@@ -263,12 +239,6 @@
 \printbibliography[heading=bibintoc, title={Bibliography}]
 \clearpage{}
 
-\markright{LLM Conversations}
-\phantomsection{}
-\addcontentsline{toc}{section}{Directory of LLM conversations}
-\input{textparts/llms}
-\clearpage{}
-
 \begingroup
 \enlargethispage{5cm}
 \markright{Chapter Assignment}
@@ -281,13 +251,7 @@
 \cleardoublepage{}
 
 \markright{Time Tracking}
-\input{textparts/luca/zeiterfassung.tex}
+\input{textparts/1/zeiterfassung.tex}
 \newpage{}
-\input{textparts/benjamin/zeiterfassung.tex}
-\newpage{}
-\input{textparts/christian/zeiterfassung.tex}
-\newpage{}
-\input{textparts/tobias/zeiterfassung.tex}
-\newpage{}
-\input{textparts/valentin/zeiterfassung.tex}
+\input{textparts/2/zeiterfassung.tex}
 \end{document}

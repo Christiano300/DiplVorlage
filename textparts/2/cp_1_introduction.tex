@@ -18,11 +18,6 @@ For the purpose of visualizing the sensor data, one data type is relevant: a \em
 The goal is to create a map similar to a heat map, displaying an overlay
 derived from data points on a map.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.5]{images/heatmap.jpg}
-    \caption{An example of a heatmap~\cite{heatmap:01}}\label{fig:Map_01}
-\end{figure}
 
 \autoref{fig:Map_01} shows a heat map of the frequency and location of
 Instagram photos tagged \#aokhalifax~\cite{heatmap:01}. Warmer colors represent
@@ -31,11 +26,11 @@ a higher \emph{density} of data points, in this case Instagram posts.
 Instead of density, our map should display the \emph{associated value} of the data points and interpolate
 regions without data points.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.38]{images/valuedistributionmap.jpg}
-    \caption{A manually drawn example of the desired result, original map from OpenStreetMap~\cite{openstreetmap:01}}\label{fig:Map_02}
-\end{figure}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[scale=0.38]{images/valuedistributionmap.jpg}
+%     \caption{A manually drawn example of the desired result, original map from OpenStreetMap~\cite{openstreetmap:01}}\label{fig:Map_02}
+% \end{figure}
 
 \autoref{fig:Map_02} shows a hand-drawn depiction of the desired result. It
 shows an arbitrary quantity over St.\ Pölten, ranging from white to brown. The density of data points can only be discerned through the opacity of the overlay.

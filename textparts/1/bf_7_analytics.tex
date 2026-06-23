@@ -118,11 +118,7 @@ FROM measurements
 GROUP BY bucket;
 \end{lstlisting}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/tigerdata-continuous-aggregate.png}
-    \caption{Visualization of precomputed continuous aggregates over time}\label{fig:continuous_aggregates}
-\end{figure}
+
 
 Statistics are often accessed frequently, and each fetch should be fast and
 should not be out of date. To avoid having to rescan every row every time, we

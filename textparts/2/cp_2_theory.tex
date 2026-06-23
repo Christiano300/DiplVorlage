@@ -47,11 +47,11 @@ K_h(x)=\frac{1}{h}K\left(\frac{x}{h}\right)
 
 \subsection{Example}
 
-\begin{figure}[H]
-	\centering
-    \includegraphics[scale=0.35]{images/kdeplot.png}
-	\caption{Kernel density estimations with different bandwidths}\label{fig:KDEPlot}
-\end{figure}
+% \begin{figure}[H]
+% 	\centering
+%     \includegraphics[scale=0.35]{images/kdeplot.png}
+% 	\caption{Kernel density estimations with different bandwidths}\label{fig:KDEPlot}
+% \end{figure}
 
 \autoref{fig:KDEPlot} shows the original normal distribution and three kernel density estimations with different bandwidths (generated using a Python script).
 \begin{itemize}
@@ -203,11 +203,11 @@ where $u$ is a parameter that indicates how strongly the weight decreases as the
 
 \emph{Improved} IDW only considers points within a certain radius $R$ of the interpolation point, greatly increasing performance with little loss in quality because distant points have almost no influence. Performance can be further improved if a spatial data structure such as a quadtree or k-d tree is used. Although the parameter $R$ has a major impact on the final result, no empirical approach has been developed to determine its optimal value\ \cite{mdpi:01}.
 
-\begin{figure}[H]
-	\centering
-    \includegraphics[scale=0.75]{images/R.pdf}
-	\caption{Improved IDW\@. Only the points in blue are included in the interpolation\\(see\ \cite{mdpi:01})}\label{fig:IDW}
-\end{figure}
+% \begin{figure}[H]
+% 	\centering
+%     \includegraphics[scale=0.75]{images/R.pdf}
+% 	\caption{Improved IDW\@. Only the points in blue are included in the interpolation\\(see\ \cite{mdpi:01})}\label{fig:IDW}
+% \end{figure}
 
 There can also be cases where $d_{s_i}$ is zero for a data point, which means that it coincides with the interpolation point. The standard solution is for $\hat{z}$ to return the value of that data point or, if necessary, the mean of all data points equal to the interpolation point.\footnote{Taking the average of all matching data points is not addressed in the sources but is included here because our data can contain duplicate points with different values}
 
@@ -347,11 +347,11 @@ Shape functions provide a way to interpolate a scalar or vector property within 
 
 A TIN is constructed by first generating a triangle mesh from a discrete set of data points using the Delaunay triangulation algorithm\ \cite{shape:triangles}. This ensures that no triangle contains any other data point and tends to avoid very slim triangles, which is good for numerical stability and output quality. After the triangulation has been formed, the interpolation starts with locating the specific triangle that contains the interpolation point. The interpolated value is then calculated as the weighted average of the values at the three vertices of the triangle.
 
-\begin{figure}[H]
-	\centering
-    \includegraphics[scale=0.55]{images/triangle.png}
-	\caption{A triangle within the TIN}\label{fig:TINtriangle}
-\end{figure}
+% \begin{figure}[H]
+% 	\centering
+%     \includegraphics[scale=0.55]{images/triangle.png}
+% 	\caption{A triangle within the TIN}\label{fig:TINtriangle}
+% \end{figure}
 
 \autoref{fig:TINtriangle} illustrates a triangle formed by vertices $P_1$ through $P_3$, with the interpolation point within the triangle. The weight of each data point $P_i$ is determined by the area of the sub-triangle $A_i$ opposite of that vertex (or rather, the portion of the total area it covers).
 
@@ -426,12 +426,12 @@ array[mask] = np.flip(interpolated, 0)[mask]
     \item \cdlines{29--30} replace all the holes in the array with interpolated values.
 \end{itemize}
 
-This produces the following height map:
-\begin{figure}[H]
-	\centering
-    \includegraphics[scale=0.75]{images/N46E15.png}
-	\caption{The extracted height map}\label{fig:heightmap}
-\end{figure}
+% This produces the following height map:
+% \begin{figure}[H]
+% 	\centering
+%     \includegraphics[scale=0.75]{images/N46E15.png}
+% 	\caption{The extracted height map}\label{fig:heightmap}
+% \end{figure}
 
 The different smoothing methods will now be tested by sampling 1000 data points from the height map, interpolating between them, and comparing the result with the original height map.
 
@@ -679,76 +679,76 @@ Note:
     \item The parameters of the methods were found by experimentation. This is because most parameters do not have a way of obtaining an optimal value (see $R$ in \autoref{subsec:idw}). One way would be to use function optimization (see\ \cite{other:scipy_optimization}) to minimize RMSE, but that is outside the scope of this thesis.
 \end{itemize}
 
-\begin{figure}[ht]
-\centering
-\captionsetup{justification=centering}
+% \begin{figure}[ht]
+% \centering
+% \captionsetup{justification=centering}
 
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/nwkr_gauss_10.png}
-    \caption{NW estimator using the Gaussian kernel}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/nwkr_parab_35.png}
-    \caption{NW estimator using the Parabolic kernel}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/kriging_64_spherical.png}
-  \caption{Kriging}
-\end{minipage}
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/nwkr_gauss_10.png}
+%     \caption{NW estimator using the Gaussian kernel}
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/nwkr_parab_35.png}
+%     \caption{NW estimator using the Parabolic kernel}
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/kriging_64_spherical.png}
+%   \caption{Kriging}
+% \end{minipage}
 
-\end{figure}
+% \end{figure}
 
-\begin{figure}[H]
-\centering
-\captionsetup{justification=centering}
+% \begin{figure}[H]
+% \centering
+% \captionsetup{justification=centering}
 
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/idw_3.75.png}
-  \caption{IDW}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/idw_imp_3.5_40.png}
-  \caption{Improved IDW}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/tin.png}
-  \caption{TIN}
-\end{minipage}
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/idw_3.75.png}
+%   \caption{IDW}
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/idw_imp_3.5_40.png}
+%   \caption{Improved IDW}
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/tin.png}
+%   \caption{TIN}
+% \end{minipage}
 
-\end{figure}
+% \end{figure}
 
-\begin{figure}[H]
-\centering
-\captionsetup{justification=centering}
+% \begin{figure}[H]
+% \centering
+% \captionsetup{justification=centering}
 
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/ddw_normal_50_.5.png}
-  \caption{DDW with Normal distribution}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/ddw_cauchy_50_.35.png}
-  \caption{DDW with Cauchy distribution}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.32\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{images/interpolations/ddw_laplace_50_.35.png}
-  \caption{DDW with Laplace distribution}
-\end{minipage}
-\end{figure}
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/ddw_normal_50_.5.png}
+%   \caption{DDW with Normal distribution}
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/ddw_cauchy_50_.35.png}
+%   \caption{DDW with Cauchy distribution}
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{0.32\textwidth}
+%   \centering
+%   \includegraphics[width=\linewidth]{images/interpolations/ddw_laplace_50_.35.png}
+%   \caption{DDW with Laplace distribution}
+% \end{minipage}
+% \end{figure}
 
 \section{Reference Implementation using Python}
 
@@ -815,11 +815,7 @@ def draw_kve(pxarray: np.ndarray, X: np.ndarray, Y: np.ndarray, VALUES: np.ndarr
 \end{itemize}
 
 The implementation produces the following output:
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.5]{images/Interp_Python.png}
-    \caption{An example output of the Python implementation}\label{fig:interp_python}
-\end{figure}
+
 
 \subsection{Flaws}\label{subsec:flaws}
 This implementation has the following flaws:

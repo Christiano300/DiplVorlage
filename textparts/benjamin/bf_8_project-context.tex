@@ -1,0 +1,120 @@
+\section{TSDB in the context of AirScout}
+
+We ultimately chose TimescaleDB\@. The main reasons were our prior experience
+with PostgreSQL and the fact that TimescaleDB provides a powerful and flexible
+solution for time-series workloads.
+
+\subsection{How we adapted our project to use TimescaleDB}
+
+To run TimescaleDB in our project, we added a dedicated service to our
+\texttt{docker-\linebreak compose} setup, as shown below:
+
+\begin{lstlisting}[style=yaml, caption={Docker-compose service definition for TimescaleDB.}, label={lst:docker-timescaledb-conclusion}]
+timescaledb:
+  image: timescale/timescaledb:latest-pg14
+  container_name: timescaledb
+  environment:
+    POSTGRES_DB: airscout
+    POSTGRES_USER: airscout_user
+    POSTGRES_PASSWORD: airscout_pass
+  ports:
+    - "5434:5432"
+  volumes:
+    - timescaledb_data:/var/lib/postgresql/data
+    - ./AirscoutDB/migrations:/docker-entrypoint-initdb.d/
+  networks:
+    - airscout-network
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U airscout_user -d airscout"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+\end{lstlisting}
+
+On its own, this configuration is not sufficient: we also need to enable the
+TimescaleDB extension and convert relevant tables into hypertables. A key
+benefit for us was that we could initially treat TimescaleDB like a standard
+PostgreSQL database. Only after roughly three months of development did we
+start using TimescaleDB-specific features such as hypertables and continuous
+aggregates. This allowed us to focus on the core functionality first and
+optimize later, once the requirements had become clearer.
+
+\subsubsection{How we activated and used TimescaleDB features}\label{sec:timescaledb-features}
+
+To enable the TimescaleDB extension and create hypertables, we added a
+dedicated migration.
+
+We enabled the extension using the following SQL statement:
+
+\begin{lstlisting}[language=PGTSSQL, caption={SQL command to activate the TimescaleDB extension.}, label={lst:sql-activate-timescaledb}]
+CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+\end{lstlisting}
+
+This creates the TimescaleDB extension if it is not already installed. The
+\texttt{CASCADE} option ensures that any required dependencies are created as
+well. The same approach can be used to enable additional PostgreSQL extensions,
+for example PostGIS for geospatial features.
+
+With the extension enabled, the database can use TimescaleDB functionality, but
+existing tables do not automatically benefit from performance improvements. To
+take advantage of TimescaleDB optimizations, we need to convert suitable tables
+into hypertables~\cite{TimescaleDB:02}.
+
+To convert the \texttt{meas} table, we first had to adjust the primary key.
+Because we wanted to partition by time, a primary key on \texttt{id} alone was
+not ideal. Instead, we used a composite primary key consisting of \texttt{id}
+and \texttt{measured\_at}. This still guarantees uniqueness while enabling
+efficient time-based partitioning.
+
+\begin{lstlisting}[language=PGTSSQL, caption={SQL commands to adjust the primary key of the "meas" table.}, label={lst:sql-create-hypertable}]
+-- Drop existing primary key on meas
+ALTER TABLE public.meas DROP CONSTRAINT IF EXISTS meas_pkey;
+
+-- Add composite primary key (id, measured_at)
+ALTER TABLE public.meas ADD CONSTRAINT meas_pkey PRIMARY KEY (id, measured_at);
+\end{lstlisting}
+
+After that, we created the hypertable on \texttt{meas} using the following
+command:
+
+\begin{lstlisting}[language=PGTSSQL, caption={SQL command to create a hypertable on the "meas" table.}, label={lst:sql-create-hypertable-convert}]
+-- Convert meas to hypertable on measured_at
+SELECT create_hypertable('public.meas', 'measured_at', chunk_time_interval => INTERVAL '1 day', if_not_exists => TRUE, migrate_data => TRUE);
+\end{lstlisting}
+
+In addition, we enabled compression on the \texttt{meas} table to reduce
+storage requirements and improve query performance for older data:
+
+\begin{lstlisting}[language=PGTSSQL, caption={SQL command to enable compression on the "meas" table.}, label={lst:sql-enable-compression}]
+-- Enable compression
+ALTER TABLE public.meas SET (
+  timescaledb.compress,
+  timescaledb.compress_segmentby = 'fk_user_id',
+  timescaledb.compress_orderby = 'measured_at DESC'
+);
+
+-- Add compression policy (compress data older than 7 days)
+SELECT add_compression_policy('public.meas', INTERVAL '7 days');
+\end{lstlisting}
+
+This enables compression for \texttt{meas}, using \texttt{fk\_user\_id} for
+segmentation and ordering by \texttt{measured\_at} in descending order. The
+compression policy then automatically compresses chunks older than seven days,
+keeping recent data uncompressed for fast access while optimizing historical
+storage and query performance.
+
+\subsubsection{TimescaleDB in AirScout}
+
+Overall, TimescaleDB proved to be an excellent fit for our project. Its
+time-series optimizations, especially for IoT workloads, and its seamless
+integration with PostgreSQL---a system we already knew well---made it a strong
+choice. The benchmark results also indicate that TimescaleDB performs better
+for our use case (see Table~\ref{tab:tsbs-query-results}). Combined with the
+weighted decision matrix from Table~\ref{tab:airscout-decision-matrix}, this
+further supported our decision to use it for AirScout.
+
+In our project-specific integration tests, we inserted more than $400{,}000$
+measurements into the database, which it handled without issue. In addition,
+the separate TSBS benchmark discussed in Chapter~\ref{sec:benchmarking}
+operated at a much larger scale. Based on both results, we are confident that
+TimescaleDB will continue to scale as the project grows.

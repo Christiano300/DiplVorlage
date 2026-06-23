@@ -1,0 +1,159 @@
+\chapter{Project Implementation}
+The goal of the implementation is a 3D visualisation of the surroundings of a specific data point. The data point holds the sensor data as well as the geographic position where the data was measured.
+
+The final implementation is divided into several files. The first file is a service class for the API that retrieves the infrastructure data used in the project. This class contains all the methods and API queries and maps the API responses into TypeScript objects. The object types are sperated into two model files for easier handling of the APIs responses and access to the buildings. Everything comes together in an Angular component, which handles the scene and the logic.
+
+\section{Overpass API}
+To retrieve the infrastructure information, a read-only API called Overpass API is being used. This API provides OpenStreetMap data that can be queried through. Overpass is optimised for queries ranging from a small number of elements and up to 10 million. There are many third party Overpass instances available. For this project, the VK Maps Overpass API instance was used, since it does not have a limited use.\ \cite{Web:67}
+
+The coordinates received from the API need to be converted for use in a 3D scene. To transform longitude and latitude to a useable x- and z-axis, LTP calculations are utilized.
+
+
+\begin{lstlisting}[language=JavaScript,caption=lon and lat conversion to x- and z-axis]
+project(lat: number, lon: number, lat_center: number, lon_center: number) {
+    const r = 6378137;
+
+    const latRad = lat * Math.PI / 180;
+    const latCenterRad = lat_center * Math.PI / 180;
+    const lonRad = lon * Math.PI / 180;
+    const lonCenterRad = lon_center * Math.PI / 180;
+
+    const x = r * (lonRad - lonCenterRad) * Math.cos(latCenterRad);
+    const z = r * (latRad - latCenterRad);
+
+    return {
+      x: x,
+      z: z,
+    };
+}
+\end{lstlisting}
+
+This code uses a simplified version of the Local Tangent Plane. This version works well for a small radius but becomes more inaccurate when increasing the radius. This is not a problem in this project, as only a small radius is used.
+
+
+\section{Implementation}
+
+\subsection{Scene Setup}
+The first step is to initialize a Three.js scene. This scene consists of a $400 \times 400$ meters plane. For visual aspects, lighting and fog was added. The lighting includes ambient light, directional light, that acts as the sun, and hemisphere light. Finally, a camera is added that rotates around the center of the plane. 
+
+\begin{lstlisting}[language=JavaScript,caption=camera rotation calculation]
+const animate = () => {
+    this.animationFrameId = requestAnimationFrame(animate);
+    const time = performance.now() * this.orbitSpeed;
+    camera.position.x = Math.sin(time) * this.orbitRadius;
+    camera.position.z = Math.cos(time) * this.orbitRadius;
+    camera.position.y = this.orbitHeight;
+    camera.lookAt(0, 0, 0);
+    this.renderer.render(scene, camera);
+};
+\end{lstlisting}
+
+This calculates the x- and z-coordinates of the orbit motion with a given radius. After that, the cameras rotation is set to look at the center point. 
+
+\subsection{Buildings}
+To get the building information, a query needs to be defined that requests the information in the Overpass API\@. The functionality is located in the Overpass service file. 
+
+\begin{lstlisting}[language=JavaScript,caption=Overpass Query for the buildings]
+const query = `[out:json][timeout:25];
+  (
+    way["building"](around:${radius}, ${lat}, ${lon});
+    way["building:part"](around:${radius}, ${lat}, ${lon});
+    relation["building"](around:${radius}, ${lat}, ${lon});
+    relation["building:part"](around:${radius}, ${lat}, ${lon});
+  );
+  out geom;`;
+\end{lstlisting}
+
+This query requests for every building and its parts within a specific radius around a longitude and latitude coordinate. The response is then converted into helper OSM types and finally mapped to a building object. These objects contain information including building vertices, geometry, height, and levels. If the building does not have a number of levels assigned to it, it is set to 1. The coordinates of the vertices are projected to 3D Cartesian coordinates.
+
+The main component gets the buildings from the service and adds them to the scene. These objects only include the 2D shape of the buildings. When adding the y-axis is set to the height of the building. Some buildings may have several shape parts and a main outer shape. Sometimes these outer shapes have a height set which overlaps the parts and the building loses detail. The solution to this problem is found in the call to the getBuildings method.
+
+\begin{lstlisting}[language=JavaScript,caption=Building part filtering]
+this.overpassService.getBuildings(this.lat, this.lon, this.radius)
+          .subscribe((allBuildings) => {
+            ...
+            parts.forEach((part) => {
+              if (part.vertices.length === 0) return;
+              const partBounds = this.getBounds(part.vertices);
+              mainBuildings.forEach((building) => {
+                if (building.vertices.length === 0) return;
+                if (
+                  this.boundsContains(
+                    this.getBounds(building.vertices),
+                    partBounds,
+                  )
+                ) {
+                  buildingsWithParts.add(building.id);
+                }
+              });
+            });
+
+            this.buildings = allBuildings.filter((b) =>
+              b.isPart ? true : !buildingsWithParts.has(b.id)
+            );
+            ...
+          })
+\end{lstlisting}
+
+This code checks, if the main outer building is overlapping with the smaller building parts and removes the outer shape if necessary. This code is executed for each building. 
+
+
+\subsection{Streets}
+To receive the street data, a separate query is utilized. The process is identical to the buildings with the difference that it is not saved into a specific street type.
+
+\begin{lstlisting}[language=JavaScript,caption=Overpass Query for the streets]
+const query = `[out:json][timeout:25];
+    (
+      way["highway"](around:${radius}, ${lat}, ${lon});
+    );
+    out geom;`;
+\end{lstlisting}
+
+This query gets the streets tagged as a highway. This does not include any pavements or bridges.
+
+In the main component, the geographical coordinates are converted to Cartesian coordinates. This results in two points, which represent the start and end of a street. The distance between those points will be the length of the street. 
+
+\begin{lstlisting}[language=JavaScript,caption=Add streets]
+for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+
+    const distance = p1.distanceTo(p2);
+    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+    const segmentGeo = new THREE.PlaneGeometry(distance, width);
+    const segmentMesh = new THREE.Mesh(segmentGeo, roadMat);
+
+    segmentMesh.position.set((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, 0);
+    segmentMesh.rotation.z = angle;
+
+    mergedGeometry.add(segmentMesh);
+}
+\end{lstlisting}
+
+This code converts the points into visible lines that represent the streets. First, it calculates the distance and angle of the points. Then geometry and mesh are created and positioned in the right way. Finally, every street will be added to a single geometry to reduce draw calls and improve performance.
+
+Right now, the streets are just rectangles with gaps. To make them appear rounded and connected, circles are created at every intersection. These circles are also added to the same merged geometry as the street lines.
+
+\begin{lstlisting}[language=JavaScript,caption=Add circles to intersections]
+points.forEach((p) => {
+    const circleGeo = new THREE.CircleGeometry(radius, 12);
+    const circleMesh = new THREE.Mesh(circleGeo, roadMat);
+    circleMesh.position.set(p.x, p.y, 0);
+    mergedGeometry.add(circleMesh);
+});
+\end{lstlisting}
+
+
+\section{Final result}
+The final result of the implementation in the project is a 3D view of the surroundings in a special location. This view can be triggered by clicking on a marker on an OpenStreetMap view. This opens up a sidebar where a 2D or the already mentioned 3D view can be toggled.
+
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.22]{images/end_result.png}
+  \caption{Final result}\label{fig:project_final_result}
+\end{figure}
+
+
+Additionally, the sidebar shows the sensor data taken at the location and when the measurement was taken. The 3D view was made optional, since some older devices might not be able to handle the scene, while maintaining good performance.

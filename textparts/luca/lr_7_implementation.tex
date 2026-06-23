@@ -1,0 +1,85 @@
+\chapter{Technical implementation and system-architecture}
+This chapter describe the technical implementation and overall system architecture used to acquire, process, and distribute sensor data. It outlines the hardware components involved in the system, including sensor boards and micro-controllers, and explains how these elements interact with software layers through standardized interfaces.
+
+\section{Used Hardware}
+The hardware components defined how physical quantities are acquired, processed, and exposed within the system architecture. A full hardware-composition includes a Sensor-Board that is controlled by a Micro-Controller and an API\footnote{Application Programming Interface}, which defines a standardized access to sensor data and control functions, across the software layers.
+
+\boldtitle{Sensor-Boards}
+Sensor-Boards are modules that detect physical or chemical changes in the environment and convert them into electrical signals (see ~\ref{title:data-sources}). Sensor-Boards usually combine a variety of sensors (IMUs and EMUs) with ADCs and a communication interface ~\ref{title:communication}. Sensor-Boards typically also include a voltage regulation and a signal conditioning module. 
+
+\cite{LRWeb:53}
+
+\boldtitle{Micro-Controllers}
+Micro-Controllers define the communication between the Sensor-Board and the API. For this to work, the Micro-Controller has two central tasks:
+
+\begin{itemize}
+    \item Make decisions based on raw sensor measurements using filters, algorithms, or calibration.
+    \item Forward the processed data to the API/actuator
+\end{itemize}
+
+\cite{LRWeb:54}
+
+\boldtitle{API}
+Once the data is received, it can be received through the API. The API defines
+
+\begin{itemize}
+    \item how to request the data.
+    \item in which format the data is received.
+    \item how to control the behavior of the Micro-Controller.
+\end{itemize}
+
+The API can be custom developed, like a REST-API. Another possibility is to use an existing approach that is designed for working with sensor-data, like MQTT ~\ref{title:mqtt}.
+
+\section{Communication-Protocols}
+\label{title:communication}
+Communication protocols define how sensor data is transmitted across different system levels. At the embedded level, hardware-oriented interfaces are used for local sensor-to-micro controller data transfer, while higher-level messaging protocols enable sensor data to be shared between system components, services and external consumers.
+
+\boldtitle{I$^2$C \footnote{Inter-Integrated Circuit}}
+I$^2$C is a physical-layer communication protocol. I$^2$C incorporates one bus with two signals, SDA for data transmission and SCL for clocking. This makes I$^2$C very lightweight and resource-conscious. 
+
+The structure of I$^2$C consists of one master device that coordinates communication and multiple slave devices. For this communication to work, every device must have an address.
+
+The clock mechanism is a features that lets slower devices pause the data transmission until they are ready to receive more data. This system stops data from being lost or corrupted and encourages a stable connection. I$^2$C has multiple modes for the speed of data transmission. 
+
+\cite{LRWeb:40}
+
+\boldtitle{SPI \footnote{Serial Peripheral Interface}}
+SPI is a low-level communication protocol, similar to I$^2$C, SPI has a clock line, with dedicated lines for master-to-slave (MOSI) and slave to master (MISO) communication. SPI is used for jobs which need fast throughput e.g. for obtaining large amount of data from flash memory.
+
+\cite{LRWeb:40}
+
+\boldtitle{MQTT \footnote{Message Queuing Telemetry Transport}}
+\label{title:mqtt}
+MQTT is a high level application-layer messaging protocol. MQTT has a broker with which every device in the MQTT-network is connected. Clients connected to the network can subscribe to topics handled by the broker, as well as publish new data about which the clients will then be notified.
+
+MQTT is lightweight and does not burden connected devices. The reasons for this are as follows:
+
+\begin{itemize}
+    \item MQTT avoids application-level polling by using an event-driven publish/subscribe mechanism.
+    \item Devices do not need to know the identity or state of other devices.
+    \item MQTT messages have a small fixed header (2 bytes minimum)
+\end{itemize}
+
+\cite{LRWeb:38, LRWeb:39}
+
+\section{Monitoring sensor health}
+Keeping the consistency of a sensor at a consistent level is an essential part of obtaining high quality data. SMH\footnote{Sensor Health Monitoring} creates challenges in providing QA\footnote{Quality Assurance} and QC\footnote{Quality Control}. Mastering them can be done with various methods.
+
+\boldtitle{Providing QA}
+QA includes methods for minimizing the risk of inaccuracies in measured data. This can include:
+\begin{itemize}
+    \item Regularly inspecting sensor-hardware
+    \item Providing redundant sensors (optimally 3)
+    \item Ensuring that enough power is supplied to the sensors
+    \item Preventing unwanted external influences from interacting with the sensors
+    \item Adapt an alert systems, warning about sensor issues
+\end{itemize}
+
+\boldtitle{Providing QC}
+QC refers to the process of validating incoming data against defined standards. It happens after collecting the data and during the streaming. Sensor data can be evaluated in three ways:
+\begin{enumerate}
+    \item Independent, where a single sensor-measurement is just checked against defined standards
+    \item Point-to-point, where a single sensor-measurement is compared with other measurements that happened close to each other
+    \item Trend analysis, where the first to measurements determine a data-trend and the next couple are checked whether or not they fit into the trend, whilst also contributing to it.
+\end{enumerate}
+\cite{LRWeb:64}

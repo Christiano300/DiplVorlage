@@ -1,0 +1,132 @@
+\chapter{Project Context and Relevance}
+An essential requirement for AirScout is the attention to performance, efficiency, and robustness to incorrect values. The goal is to avoid the acquisition of all data in the frontend directly as well as inconsistent values being saved to the database.
+
+\boldtitle{Handling outliers}
+Handling inconsistent values in the context of AirScout means to avoid saving outliers. For this to be possible we need a method to determine whether or not a value is an outlier. Between the IQR-rule and the Z-Score method, we chose the Z-Score method since it is less computationally heavy ($O(n)$) whilst the IQR-rule needs sorting, leveraging it's computational cost to $O(n \log n)$.
+
+The procedure of detecting outliers is done when the AirScout device posts data to the backend to avoid outliers being computed multiple times. Furthermore, the outlier detection has to be done for every data field, causing performance issues with the wrong detection method.
+
+In order to cleanly determine the necessary data for the Z-Score method we define a Getter and a Setter-Map for retrieving the data iteratively without unnecessarily using reflection.
+
+\begin{lstlisting}[language={[AS]Java},caption=Detecting outliers in Measurement list]
+public class MeasurementPreProcessingUtils {
+    // Defining Getter and Setter maps for processing every field cleanly
+    private static final Map<SensorField, Function<Measurement, Float>> GETTERS =
+        Map.ofEntries(
+        Map.entry(SensorField.TEMPERATURE, Measurement::getTemperature),
+        Map.entry(SensorField.HUMIDITY, Measurement::getHumidity),
+        Map.entry(SensorField.AIR_PRESSURE, Measurement::getAirPressure),
+        ...
+        );
+
+    private static final Map<SensorField, Function<Measurement, Float>> SETTERS =
+        Map.ofEntries(
+        Map.entry(SensorField.TEMPERATURE, Measurement::setTemperature),
+        Map.entry(SensorField.HUMIDITY, Measurement::setHumidity),
+        Map.entry(SensorField.AIR_PRESSURE, Measurement::setAirPressure),
+        ...
+        );
+}
+\end{lstlisting}
+
+The next step is to iterate over all fields and determine the mean and standard deviation for each.
+
+\begin{lstlisting}[language={[AS]Java},caption=Determine the mean and std for each field.]
+static Map<SensorField, MeasurementStatisticData> getStatistics(List<Measurement> measurements) {
+Map<SensorField, MeasurementStatisticData> statistics = new HashMap<>();
+
+for (var entry : GETTERS.entrySet()) {
+  SensorField key = entry.getKey();
+  Function<Measurement, Float> getter = entry.getValue();
+
+  List<Double> values =
+    measurements.stream().map(getter).filter(Objects::nonNull).map(Double::valueOf).toList();
+
+  int n = values.size();
+  if (n < 2) continue; // Not enough measurements to determine outliers
+
+  double mean = values.stream().mapToDouble(Double::doubleValue).average().orElse(Double.NaN);
+
+  double variance = values.stream().mapToDouble(v -> Math.pow(v - mean, 2)).sum() / (n - 1); // n - 1 because of sample
+
+  double std = Math.sqrt(variance);
+
+  statistics.put(key, new MeasurementStatisticData((float) mean, (float) std));
+}
+
+return statistics;
+}
+\end{lstlisting}
+
+Now that we have determined the std and mean for every field, we can decide whether or not a measurement is an outlier or not, we simply do this by checking if the absolute value of the Z-score is greater than 3. If this is the case we replace the value with a moving average, window size being 3.
+
+\begin{lstlisting}[language={[AS]Java},caption=Calculating the Z-Score and replacing the outlier]
+public static List<Measurement> handleOutliers(List<Measurement> measurements) {
+    for (int i = 0; i < measurements.size(); i++) {
+
+        Measurement m = measurements.get(i);
+        Float value = getter.apply(m);
+
+        if (value == null) continue; // Not enough data
+
+        float z = Math.abs(value - stat.getMean()) / stat.getStd();
+
+        if (z > 3) {
+            Float replacement = getMovingAverage(measurements, getter, i, WINDOW_SIZE);
+            setter.accept(m, replacement);
+        }
+    }
+}
+\end{lstlisting}
+
+Finally we adapt a simple moving average implementation.
+
+\begin{lstlisting}[language={[AS]Java},caption=Implementation of the Moving Average Filter]
+    private static Float getMovingAverage(
+      List<Measurement> measurements,
+      Function<Measurement, Float> getter,
+      int index,
+      int windowSize) {
+
+    int start = Math.max(0, index - windowSize);
+    float sum = 0f;
+    int count = 0;
+
+    for (int i = start; i < index; i++) {
+      Float v = getter.apply(measurements.get(i));
+      if (v != null) {
+        sum += v;
+        count++;
+      }
+    }
+    return count > 0 ? sum / count : null;
+  }
+\end{lstlisting}
+
+\boldtitle{Transmitting sensor data}
+AirScout provides a sub page for visualizing data trends inside a radius in several charts. Due to performance reasons, the whole sensor-data context should not be shared to the frontend, thus the data needs to be aggregated at the backend and then sent to the frontend.
+
+The AirScout API provides an endpoint for retrieving meta data inside a radius, that returns the average humidity, max temperature, average PM 2.5 particle Mass and a total count of the measurements. Although it is important to mention that endpoints are available for all charts on the page.
+
+The query for retrieving the data looks the following:
+\begin{lstlisting}[language=PGTSSQL,caption=Query for retrieving meta data inside radius]
+SELECT
+    AVG(m.hum) AS avgHum,
+    MAX(m.temp) AS maxTemp,
+    AVG(m.part_2_5_mass) AS avgPm25,
+    COUNT(*) AS count
+FROM public.meas m
+WHERE
+    m.latitude BETWEEN (:lat - (:radius / 111320.0)) AND (:lat + (:radius / 111320.0))
+    AND m.longitude BETWEEN (:lon - (:radius / (111320.0 * COS(RADIANS(:lat)))))
+                        AND (:lon + (:radius / (111320.0 * COS(RADIANS(:lat)))))
+    AND (
+      2 * 6371000 * ASIN(
+        SQRT(
+          POW(SIN(RADIANS(m.latitude - :lat) / 2), 2) +
+          COS(RADIANS(:lat)) * COS(RADIANS(m.latitude)) *
+          POW(SIN(RADIANS(m.longitude - :lon) / 2), 2)
+        )
+      )
+    ) <= :radius
+\end{lstlisting}

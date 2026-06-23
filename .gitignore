@@ -1,0 +1,55 @@
+# Ignore generated PDFs
+*.pdf
+
+# LaTeX intermediate and build files
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lol
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.synctex
+*.nav
+*.snm
+*.vrb
+*.dvi
+*.ps
+*.bbl
+*.bbl-SAVE-ERROR
+*.bcf
+*.bcf-SAVE-ERROR
+*.blg
+*.idx
+*.ilg
+*.ind
+*.run.xml
+
+# LaTeXmk / build configs & caches
+.latexmkrc
+_minted-*/
+*.pyg
+
+# Common build/output directories
+_build/
+build/
+out/
+dist/
+
+# Conversion outputs / progress (pandoc, latex->html/epub/docx)
+*.html
+*.epub
+*.docx
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+# .vscode/
+
+# time series bench suite
+benchmark-suite

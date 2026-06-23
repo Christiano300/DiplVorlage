@@ -1,0 +1,28 @@
+{
+  "files.exclude": {
+    // LaTeX build artifacts
+    "**/*.aux": true,
+    "**/*.bbl": true,
+    "**/*.blg": true,
+    "**/*.fdb_latexmk": true,
+    "**/*.fls": true,
+    "**/*.idx": true,
+    "**/*.ilg": true,
+    "**/*.ind": true,
+    "**/*.lof": true,
+    "**/*.lol": true,
+    "**/*.lot": true,
+    "**/*.toc": true,
+    "**/*.run.xml": true,
+    "**/*.synctex.gz": true,
+    "**/*.log": true,
+    "**/*.out": true,
+    "**/*.bbl-SAVE-ERROR": true,
+    "**/*.bcf": true,
+    "**/%OUTDIR%": true,
+    
+    // OS and editor files
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+  }
+}

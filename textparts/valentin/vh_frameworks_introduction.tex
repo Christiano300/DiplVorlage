@@ -1,0 +1,275 @@
+\chapter{Introduction of the various mobile-application-development-frameworks}\label{chap:intro}
+This chapter establishes the foundational understanding required for the subsequent comparative analysis of modern mobile application development frameworks. Before evaluating their performance, developer ergonomics, and architectural trade-offs, it is necessary to examine the core philosophies, rendering mechanisms, and historical contexts of the technologies selected for this study.
+
+The contemporary mobile development landscape spans a diverse spectrum, ranging from traditional native development to web-based hybrid architectures.  To provide a comprehensive overview, this chapter explores the following frameworks and development paradigms:
+
+\begin{itemize}
+    \item \textbf{React Native} and \textbf{NativeScript}: Cross-platform frameworks that orchestrate native UI components through JavaScript/TypeScript runtimes.
+    \item \textbf{Ionic} and \textbf{Tauri}: WebView-driven architectures that leverage standard web technologies for mobile deployment.
+    \item \textbf{Flutter}: A comprehensive UI toolkit featuring its own high-performance, platform-agnostic rendering engine.
+    \item \textbf{Xamarin (now .NET MAUI)}: Microsoft's established ecosystem for cross-platform native development using C\# and the .NET runtime.
+    \item \textbf{Kotlin Multiplatform Compose}: An emerging paradigm allowing for shared Kotlin business logic and declarative UI across different operating systems.
+    \item \textbf{Native Development}: The platform-specific control group (Swift/iOS, Kotlin/Android) providing the ultimate benchmark for performance, API access, and user experience.
+\end{itemize}
+
+By detailing the specific rendering pipelines, adoption metrics, and underlying architectures of these technologies, this section provides the necessary context for the empirical comparisons conducted later in this thesis.
+
+\section{Framework Profiles}
+
+    \begin{sidewaysfigure}        
+        \centering
+        \includegraphics[width=\textheight]{images/frameworks-popularity.jpg}
+        \caption{State of JS 2024: Changes Over Time \cite{sojs:00}}
+        \label{fig:framework-popularity}
+
+        \paragraph{Changes Over Time}
+        Each line goes from the earliest to the latest available year of data. A higher point means a technology has been used by more people and a point further to the right means more users want to learn it; or have used it and would use it again.
+        
+    \end{sidewaysfigure}
+ 
+    \subsection{React Native}
+        Released in 2015 by Facebook, React Native was a completely new approach to Cross-Platform mobile development. It is based on the React web framework which was released two years earlier by Facebook.
+ 
+        As the name implies, React Native renders native components of the underlying operating system. This leads to a very familiar and natural feeling UI. Users should not be able to tell the difference between a Native app and one that is built with React Native.
+           
+        \subsubsection{Adoption}
+        In 2025, React Native is still extremely relevant and one of the most popular ways to build mobile applications.
+        On their website\footnote{https://reactnative.dev/showcase}, we can see that many of Meta's apps are built using React Native. This includes Facebook, Instagram and Messenger Desktop.~\cite{React:00}
+    
+        Microsoft has built its mobile ``Office'', Outlook and Teams app using React Native.~\cite{React:02}
+        Even Amazon bets on the technology for their most used app: ``Amazon Shopping''.
+        Other popular and well-known apps include: Shopify, Tesla and Discord.
+
+        \subsubsection{Rendering}
+        The React Native renderer goes through a sequence of work to render React logic to a host platform. This sequence of work is called the render pipeline and occurs for initial renders and updates to the UI state. This section goes over the render pipeline and how it differs in those scenarios. \cite{React:01}
+
+        The fundamental challenge of the React Native framework is the transduction of a declarative UI, defined in JavaScript/TypeScript, into the imperative, platform-specific widget toolkit of the host operating system (e.g. UIView in iOS, android.view.View in Android).
+        
+        The rendering process is the core mechanism that facilitates this translation. This mechanism is architecturally distinct from web-based React, as its target is a native view hierarchy rather than a Document Object Model (DOM). React Native's rendering architecture has undergone a significant paradigm shift, moving from an \textbf{asynchronous, bridge-based} model \textbf{to} a \textbf{modern, synchronous-capable} system.
+        
+        \subsubsection{The Legacy Architecture - The Asynchronous Bridge}
+        The original architecture of React Native is predicated on a decoupled, multi-threaded environment. This model distributes workloads across three primary threads: 
+        \begin{itemize}
+            \item \textbf{JavaScript (JS) Thread:} Executes the application's entire JavaScript logic. This includes React's reconciliation algorithm, application state management (e.g. Redux or Zustand) and business logic.
+
+            \item \textbf{Native (Main/UI) Thread:} The platform's main application thread. It is solely responsible for handling native UI rendering and processing user-generated events (e.g. touch, scroll). To ensure a fluid user experience, this thread must never be blocked.
+
+            \item \textbf{Shadow Thread:} A background thread introduced to offload layout computations from both the JS and UI threads. It is responsible for calculating the layout of the UI hierarchy. 
+        \end{itemize}        
+        
+        Communication between these decoupled threads is mediated by the \textbf{Asynchronous Bridge}. When the state of a React component updates, the JavaScript thread executes React's reconciliation (``diffing'') algorithm, generating a new, immutable React Element Tree. This tree describes the next UI state.
+        
+        This description is serialized (typically as JSON) and dispatched in a batched, asynchronous operation across the Bridge to the Shadow Thread. The Shadow Thread deserializes the data and constructs a ``Shadow Tree'' — an immutable, platform-agnostic representation of the UI. It then utilizes the Yoga layout engine, an implementation of the CSS Flexbox standard, to calculate the precise coordinates and dimensions of every UI element.
+        
+        The resulting layout information and UI update operations (e.g. createView, updateViewProps) are again serialized into a batch and sent asynchronously across the Bridge to the Native/UI Thread. The Native Thread finally deserializes this batch and executes the corresponding imperative commands to create, update, or remove the actual native host views.
+        
+        While this asynchronous, batched approach protects the UI thread from being blocked by JS execution or layout calculations, it introduces inherent bottlenecks:
+
+        \begin{itemize}
+            \item \textbf{Serialization Overhead:} The constant serialization and deserialization of JSON data for all communication is computationally expensive.
+            \item \textbf{Latency:} The asynchronous ``fire-and-forget'' nature of the Bridge makes it difficult to prioritize updates. High-frequency events, such as gesture tracking for animations, can be perceptibly laggy as they must traverse the Bridge.
+            \item \textbf{Single Point of Failure:} The Bridge acts as a single, sequential queue, meaning a high volume of low-priority updates can delay a high-priority user interaction.
+        \end{itemize}
+        
+        \subsubsection{The new Architecture: JSI, Fabric and TurboModules}
+        To address the limitations of the Bridge, a new architecture was engineered, centered on a new communication layer known as the JavaScript Interface (JSI).
+        
+            
+    \subparagraph{JavaScript Interface (JSI):}
+    The JSI is a lightweight, general-purpose C++ API that replaces the Bridge entirely. Its fundamental innovation is the ability for JavaScript to hold direct, synchronous references to C++ ``Host Objects'' and invoke their methods. Conversely, C++ can hold references to JavaScript objects and functions.
+    
+    This eliminates the need for JSON-based serialization. Communication between the JS and native realms becomes synchronous, direct method invocation. This is analogous to a C++ object being ``projected'' into the JavaScript runtime, where it can be operated on directly.
+    
+    \subparagraph{Fabric:} Fabric is the new rendering system, or ``renderer,'' that is built upon the JSI. It replaces the legacy Shadow Thread and native UIManager modules. In the Fabric model, the rendering pipeline is re-conceptualized into three distinct phases:
+
+    \begin{itemize}
+        \item \textbf{Render Phase:} When a React state update occurs, the React reconciler (in JavaScript) creates a new React Element Tree. It then synchronously invokes the Fabric renderer (via a JSI-exposed C++ function) to create a corresponding React Shadow Tree in C++. This Shadow Tree is the new source of truth for the UI and exists in the C++ domain, accessible from both JS and the UI thread.
+
+        \item \textbf{Commit Phase:} Once the Shadow Tree is complete, the renderer performs layout calculation using Yoga. This operation can be executed on any thread. The new layout information is committed and the tree is ``promoted'' as the next version to be mounted.
+
+        \item \textbf{Mount Phase:} The Fabric renderer calculates the differential between the currently displayed Host View Tree (the native widgets) and the new Shadow Tree. It then generates a precise list of UI mutations, which are executed on the Native/UI Thread to update the platform's native views.
+    \end{itemize}
+    
+    Crucially, the JSI allows this entire process to be prioritized and, when necessary, synchronous. High-priority events (e.g. user input from a gesture) can trigger a synchronous render-commit-mount pipeline, bypassing the JS thread's event queue and resulting in low-latency, 60-FPS animations that were impossible under the Bridge. 
+    
+    This architecture is complemented by \textbf{TurboModules}, the JSI-based replacement for legacy Native Modules. Like Fabric, they are lazily loaded (improving app startup) and expose their methods via JSI, allowing for synchronous and high-performance execution of native code directly from JavaScript. \cite{React:03}
+        
+    \subsection{Ionic}
+        \begin{quote}
+            Ionic was founded in 2012 by developer and designer duo, Max Lynch and Ben Sperry. The company’s first major project was an open source framework that made it possible for web developers to build fast, beautiful mobile apps for any platform, using the web tools and languages that they already know and love. \cite{Ionic:00}
+        \end{quote}
+        
+        Ionic represents the ``hybrid'' or ``WebView'' approach. Applications are built using standard web technologies (HTML, CSS and JavaScript/TypeScript) and can take advantage of popular web frameworks such as Angular, React, or Vue.
+        
+        The entire application runs inside a native ``WebView'' container on the device. To access native device features such as the camera, GPS, or file system, Ionic uses a bridge layer---most commonly \textbf{Capacitor} (its modern, in-house solution) or the older Apache \textbf{Cordova}.
+        
+        \subsubsection{Adoption}
+        Ionic is extremely popular for B2B, enterprise and internal-use apps where rapid development and cost-effectiveness are more critical than achieving peak native performance. It is also a popular choice for ``Progressive Web Apps'' (PWAs).~\cite{Ionic:01}
+        
+        Well-known public apps built with Ionic include Amtrak, Sworkit (a fitness app) and MarketWatch.
+
+        \subsubsection{Capacitor}
+        
+        \begin{figure}
+            \centering
+            \includegraphics[width=0.75\linewidth]{images/capacitor-architecture.jpg}
+            \caption{High-level architecture of Capacitor~\cite{Ionic:02}}\label{fig:ionic:00}
+        \end{figure}
+
+        The Capacitor package consists of the following modules:
+
+        \begin{itemize}
+            \item \textbf{Web View:} The web app is executed within a \textbf{Web View}, which is a lightweight, chrome-less native OS control. This component provides a streamlined browser instance where the web assets (HTML, CSS, JavaScript) are rendered.
+            \item \textbf{Native Bridge:} This component is the core of the runtime, facilitating communication between the Web View and native functionality.
+                \begin{itemize}
+                \item It \textbf{exports} Capacitor's runtime JavaScript (JS) API—including all known native plugins and their methods—to the Web View via\\
+                \texttt{window.Capacitor.Plugins}.
+                \item It manages \textbf{message passing} and tracks native invocations between the Web View and the native runtime, enabling the web app to call native code.
+            \end{itemize}
+            \item \textbf{Runtime:} The native runtime processes the calls originating from the Web View.
+            \begin{itemize}
+                \item Upon application start, it loads and initializes installed plugins, then injects the necessary JS Symbols for these plugins into the Web View.
+                \item All calls in Capacitor are \textbf{asynchronous}. The runtime manages a set of active, in-progress calls.
+                \item When an invocation completes, the runtime constructs a message and sends it back to the Web View, resolving the original plugin call in the web app.
+            \end{itemize}
+        \end{itemize}
+
+    \subsubsection*{Capacitor Apps Are Native Apps}
+
+    Crucially, Capacitor apps are inherently \textbf{native apps}. The project files used to build the final binaries (e.g. Xcode for iOS, Gradle for Android) are standard native projects. This design allows development teams to incorporate arbitrary \textbf{custom native code} and invoke it from the Web View using the Capacitor Plugin API.
+    
+    The built web assets (the modern JS app) are copied into this native project structure. The web app imports the $\texttt{@capacitor/core}$ library to interact with the Capacitor's APIs. During the build process, the $\texttt{native-bridge.js}$ file is copied, providing the web-side message passing bridge.
+    
+    
+    Capacitor provides a pure web development experience by extending the standard Web View with full, though indirect, access to native functionality via plugins. This contrasts with other cross-platform technologies that may rely on native system controls, offering a ``write once, run anywhere'' philosophy fully compatible with the broader web development ecosystem.\\\cite{Ionic:02}
+            
+
+    \subsection{Tauri}
+        \begin{quote}
+             Create small, fast, secure, cross-platform applications \cite{Tauri:00}
+        \end{quote}
+    
+        Tauri is a modern, lightweight framework for building applications for desktop and, more recently, mobile. It is not a traditional mobile framework but rather an ``enabler'' that follows a unique philosophy.
+        
+        Its core principle is security, performance and a minimal footprint. For mobile, it leverages the system's native WebView (e.g. WKWebView on iOS, Android's WebView). The key differentiator is its backend, which is written in Rust. This allows for highly secure, high-performance logic, while the UI is built with standard web technologies. \cite{Tauri:00}
+        
+        \subsubsection{Adoption}
+        As Tauri Mobile is an emerging technology, it does not yet have the widespread adoption of its competitors. Its primary adoption is currently in the desktop space. However, it is gaining significant attention from developers who prioritize security and want to leverage Rust, offering a compelling alternative to Electron-based solutions, with mobile as a new frontier.
+
+        \subsubsection{Architecture}
+        
+        \begin{figure}
+            \centering
+            \includegraphics[width=1\linewidth]{images/tauri-architecture.png}
+            \caption{a graph showing the IPC (Inter-Process Communication) bridge between the Application Core and the System's WebView \cite{img:TAU:01}}
+            \label{fig:tauri-architecture}
+        \end{figure}
+
+        Tauri has to solve a very similar challenge to Ionic (Capacitor) since it also leverages the system's native WebView. While the web-front-end runs inside the WebView, the Rust-side of the App (Application Core) handles Plugin execution and interfaces with the local system. \cite{Tauri:01}
+
+    
+  \subsection{Kotlin Multiplatform (Compose Multiplatform)}
+
+    Kotlin Multiplatform (KMP) is an open-source technology developed by JetBrains, the creators of the Kotlin language. It allows developers to share business logic, data layers, and networking code across multiple target platforms --- including Android, iOS, Desktop (JVM) and Web --- while still writing platform-specific code wherever necessary. It is not a framework in the traditional sense but rather a \textbf{compiler feature} built directly into the Kotlin toolchain. \cite{KMP:00}
+
+    Layered on top of KMP is \textbf{Compose Multiplatform}, also developed by JetBrains. It extends Google's \textbf{Jetpack Compose} --- the modern, declarative UI toolkit for Android --- to other platforms. This allows developers to share not only business logic but also the entire UI layer using a single, reactive, Kotlin-based API. \cite{KMP:01}
+
+    This combination represents a philosophically distinct approach from both the native-bridge model (React Native, NativeScript) and the WebView model (Ionic, Tauri). Like Flutter, it aims for a high degree of code sharing and uses its own rendering engine for UI. Unlike Flutter, it is deeply integrated into the established Kotlin and Android development ecosystem, making it a natural evolution for existing Android teams.
+
+    \subsubsection{Adoption}
+
+    As of 2025, Kotlin Multiplatform is considered stable for production use, with Compose Multiplatform on iOS having reached a stable release milestone in 2024. Its adoption is growing rapidly, particularly among teams already using Kotlin for Android or backend development (e.g. with Ktor or Spring).
+
+    JetBrains itself dogfoods the technology in several of its own products. Other notable adopters include \textbf{McDonald's} (for their Global Mobile App platform), \textbf{Netflix} (for shared data and domain layers) and \textbf{Cash App} by Block, which migrated significant portions of their shared business logic to KMP. \cite{KMP:02}
+
+    Its adoption is especially prominent in enterprises that want to maximise code reuse without fully abandoning native UI capabilities --- using KMP for the shared logic while retaining SwiftUI on iOS for the presentation layer when necessary.
+
+    \subsubsection{Architecture and Code Sharing Model}
+
+    The KMP architecture is best understood through the concept of \textbf{source sets}. A KMP project is structured into at minimum three source sets:
+
+    \begin{itemize}
+        \item \textbf{\texttt{commonMain}:} Contains all platform-agnostic code. This is where shared business logic, domain models, repositories and --- when using Compose Multiplatform --- the shared UI is written. Code here has access only to the Kotlin standard library and declared multiplatform dependencies.
+        \item \textbf{\texttt{androidMain}:} Contains Android-specific implementations and can use the full Android SDK.
+        \item \textbf{\texttt{iosMain}:} Contains iOS-specific implementations and has direct access to Apple's frameworks (UIKit, Foundation, etc.) through Kotlin's interoperability with Objective-C and Swift.
+    \end{itemize}
+
+    Platform-specific behaviour is declared via the \textbf{\texttt{expect}/\texttt{actual}} mechanism. An \texttt{expect} declaration in \texttt{commonMain} defines a contract (e.g. a function to retrieve the device's platform name), and each platform source set provides the corresponding \texttt{actual} implementation. This allows seamless abstraction of platform differences without sacrificing type safety. \cite{KMP:03}
+
+    \subsubsection{Rendering}
+
+    The rendering model of Compose Multiplatform differs depending on the target platform, and understanding this distinction is critical for performance analysis.
+
+    \subparagraph{Android:}
+    On Android, Compose Multiplatform \textbf{is} Jetpack Compose. It compiles directly to native Android bytecode (JVM/ART) and uses the standard \\
+    \texttt{android.graphics.Canvas} API to draw the UI.\ There is no additional abstraction layer; it is architecturally identical to a pure native Android application built with Jetpack Compose.
+
+    \subparagraph{iOS:}
+    On iOS, Compose Multiplatform uses a fundamentally different rendering pipeline. The Kotlin code for iOS is compiled to native ARM binaries via the \textbf{Kotlin/Native} compiler, using LLVM as its backend. The Compose UI rendering does not use UIKit controls. Instead, it draws all UI elements using a \textbf{Skia}-based canvas, rendered via Apple's \textbf{Metal} GPU API (or \textbf{OpenGL ES} on older devices). \cite{KMP:01}
+
+    This rendering model is analogous to Flutter's approach: every pixel is drawn by the framework rather than delegated to native OS widgets. The pipeline can be summarised as follows:
+
+    \begin{enumerate}
+        \item A state change in a Compose \texttt{@Composable} function triggers recomposition.
+        \item The Compose runtime performs a differential comparison of the UI tree (similar in concept to React's reconciliation), identifying which nodes have changed.
+        \item The updated nodes are re-drawn to an off-screen Skia canvas.
+        \item The resulting frame is committed to a \texttt{CALayer} (Core Animation Layer) and presented to the screen via Metal, targeting 60 or 120 FPS.
+    \end{enumerate}
+
+    \subparagraph{Trade-offs of the Skia-on-iOS approach:}
+    This approach carries inherent trade-offs. On one hand, it delivers pixel-perfect UI consistency between Android and iOS and avoids the overhead of a JavaScript bridge entirely. On the other hand, because the UI is not composed of native UIKit components, out-of-the-box adherence to iOS-specific interaction patterns (e.g. native scroll momentum, swipe-back gestures, platform pickers) requires additional effort and may not be fully idiomatic. JetBrains provides Cupertino-themed components to mitigate this, but it remains a relevant consideration for applications targeting a design-sensitive iOS audience. \cite{KMP:01}
+
+    In summary, Compose Multiplatform achieves near-native rendering on Android by using the platform's own Jetpack Compose pipeline, while on iOS it employs a Skia-based canvas approach that trades some platform-specific UI fidelity for full cross-platform code sharing.
+
+    \subsection{NativeScript}
+        NativeScript, originally developed by Telerik (now part of Progress), is an open-source framework for building truly native mobile apps using JavaScript, TypeScript, Angular, or Vue.js. \cite{NS:00}
+        
+        Similar to React Native, it renders platform-specific, native UI components. Its key architectural difference is that it provides direct, 100\% access to all native platform APIs (both iOS and Android) from the JavaScript/TypeScript code. It does not rely on a ``bridge'' in the same way as React Native; instead, it uses a ``runtime'' that allows JavaScript to directly call native device APIs, which can be a significant performance advantage for complex tasks.
+        
+        \subsubsection{Adoption}
+        NativeScript is a powerful, albeit less popular, competitor to React Native. It is often favored in enterprise environments that have existing Angular or Vue.js teams. It is also used for building apps that require deep and complex access to platform-specific SDKs. Popular examples include Strides (a habit-tracking app) and BitPoints (a cryptocurrency app). \cite{NS:01}
+
+    \subsection{Flutter}
+        First previewed by Google in 2017\cite{Flutter:01} and reaching its stable 1.0 release in December 2018, Flutter represents a fundamentally different approach to cross-platform development. It is both a UI toolkit and a framework, using Google's in-house language, Dart.
+        
+        Unlike React Native or NativeScript, Flutter \textbf{does not use native UI components}. Instead, it ships with its own high-performance 2D rendering engine called Skia. Flutter draws every single pixel on the screen, from the buttons to the text to the layout. This approach, similar to a game engine, gives it two major advantages:
+        \begin{itemize}
+            \item \textbf{Pixel-Perfect Consistency:} The UI looks and behaves identically on iOS, Android, Web and Desktop.
+            \item \textbf{Performance:} Direct compilation to native ARM/x86 code and control over the entire rendering pipeline allows for fluid 60/120 fps animations.
+        \end{itemize}
+        \cite{Flutter:00}
+        
+        \subsubsection{Adoption}
+        Flutter has seen explosive growth and is considered a top-tier framework. It is used by major companies for critical applications.
+        
+        Google itself uses Flutter for parts of Google Pay and the Google Ads app. Other prominent examples include the BMW vehicle app, Alibaba's ``Xianyu'' app (a massive e-commerce platform), eBay Motors and Sonos (for their smart speaker setup app). \cite{Flutter:02}
+
+    \subsection{Xamarin}
+        Xamarin was one of the original pioneers in cross-platform native development, founded in 2011 and acquired by Microsoft in 2016. It allowed developers to build native iOS, Android and Windows apps using C\# and the .NET framework.
+        
+        Xamarin.Forms, its UI framework, allowed developers to share UI code (often written in XAML) across platforms, which would then be translated into native controls. \cite{Xamarin:01}
+        
+        \subsubsection{Evolution to .NET MAUI}
+        For a ``modern'' study, it is crucial to note that Xamarin.Forms has officially evolved into .NET MAUI (.NET Multi-platform App UI). As of 2024/2025, .NET MAUI is Microsoft's primary framework for this purpose. It modernizes the Xamarin.Forms architecture, unifying libraries into a single project structure and improving performance. \cite{Xamarin:00}
+        
+        \subsubsection{Adoption}
+        Given its .NET and C\# foundation, Xamarin (and now .NET MAUI) has always been a dominant force in the enterprise sector, especially for companies already invested in the Microsoft ecosystem for their backend. 
+        
+        Prominent examples include the UPS Mobile app, Alaska Airlines and Bitwarden (the password manager). \cite{Xamarin:02}
+
+    \subsection{Native}
+        Native development is the ``baseline'' or ``control group'' for any comparative study. It refers to building an application using the official, first-party languages, tools and UI frameworks provided directly by the platform holder.
+        
+        \begin{itemize}
+            \item \textbf{For iOS:} Building with the Swift language (or legacy Objective-C) and the SwiftUI (declarative) or UIKit (imperative) frameworks in Xcode.
+            \item \textbf{For Android:} Building with the Kotlin language (or legacy Java) and the Jetpack Compose (declarative) or Android View (XML) (imperative) frameworks in Android Studio.
+        \end{itemize}
+        
+        \subsubsection{Advantages (The ``Benchmark'')}
+        The ``adoption'' of native is universal, as it is the foundation of all mobile apps. Its key characteristics serve as the benchmark against which all cross-platform frameworks are measured:
+        \begin{itemize}
+            \item \textbf{Peak Performance:} Unmatched speed, responsiveness and battery efficiency.
+            \item \textbf{Immediate API Access:} Instant access to all new OS features (like the iPhone's ``Dynamic Island'') on day one.
+            \item \textbf{Gold-Standard UI/UX:} Perfect adherence to the platform's specific design guidelines and user expectations (e.g. native scroll physics, page transitions).
+        \end{itemize}
+        The primary ``cost'' of native development is the time and expense of maintaining two entirely separate codebases and development teams.

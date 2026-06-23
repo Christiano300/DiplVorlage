@@ -1,0 +1,103 @@
+\chapter{Conclusion}
+
+\section{Conclusion --- Reisenbichler Luca}
+A detailed guide on how to handle sensor data and the problems that come with
+it were described extensively. Fundamental concepts of sensor definitions as
+well as the basic operating principles of specific sensors, environmental as
+well as orientational, were discussed. Furthermore, technical implementations
+and use-cases were presented in order to demonstrate practical applications,
+highlight potential challenges and provide strategies for integrating sensors
+into real-world systems.
+
+This diploma thesis shows that sensor data processing heavily depends on the
+field of usage, where high efficiency/precision use cases need more complex
+data handling than simple workflows.
+
+Furthermore, the work has been greatly integrated into AirScout, whether it was
+in the form of code or in the form of discussions and decisions to be made,
+greatly improving the performance of the workflow.
+
+Ultimately, it can be said that a customized sensor processing routine is an
+essential part when working with hardware like this and it has been optimally
+adapted in AirScout.
+
+\section{Conclusion --- Benjamin Friedl}
+This thesis evaluated time-series database technologies and performance
+techniques relevant to the AirScout project. Through controlled benchmarks and
+realistic workload measurements (using TSBS and project-specific tests) I
+compared ingestion throughput, query latency, compression efficiency and
+scalability across several systems. The investigation showed that carefully
+chosen time-series optimizations --- hypertables, compression policies and
+continuous aggregates --- materially improve both storage efficiency and query
+responsiveness. Based on the measured trade-offs and our prior experience with
+PostgreSQL, TimescaleDB was selected and integrated into AirScout; the
+integration demonstrated measurable gains in ingestion rate and query
+performance for our IoT workloads.
+
+\section{Conclusion --- Christian Patzl}
+
+This thesis described the theory and implementation of a map that shows the
+distribution of a certain value across a geographical area based on a
+collection of data points. It introduced the requirements for a spatiotemporal
+weighted value distribution map, discussed the mathematical background of
+kernel estimation and compared and evaluated different interpolation methods.
+
+Based on this analysis, a WebGL-based implementation was developed that
+combined a kernel regression with a kernel density estimation to smoothly
+visualize the distribution of data values. The work also showed how map
+rendering, data textures, and the Leaflet.TileLayer.GL extension could be used
+to integrate the overlay into a browser-based map.
+
+\section{Conclusion --- Eisinger Tobias}
+
+As part of this work, a 3D implementation for geographical/infrastructural data
+was developed and implemented in the ``AirScout'' project. This implementation
+consists of an orbit camera view with a buildings and streets in a radius of
+200 meters. For visual purposes, lighting was introduced to the scene and
+windows were added to the buildings.
+
+This work covers and evaluates the most popular frameworks for web graphics.
+Additionally, the fundamental mathematics of 3D transformations and the matrix
+and vector operations needed for this where covered. The most important
+geographic coordinate system and methods to use them in computer graphics was
+also part the work.
+
+The knowledge gained in this research played a crucial role in the success of
+the implementation and optimization of the 3D view.
+
+\section{Conclusion --- Valentin Hacker}
+This thesis systematically evaluated the most prominent cross-platform mobile
+application development frameworks --- React Native, Ionic, Tauri, Kotlin
+Multiplatform, Flutter, .NET MAUI, NativeScript, and native development --- across
+the dimensions of developer experience, runtime performance, ecosystem maturity,
+and security. The comparative analysis revealed that no single framework dominates
+every category: Flutter excels in developer experience thanks to its exceptional
+tooling and hot reload workflow, native development remains the undisputed
+baseline for raw performance and API access, and KMP distinguishes itself through
+a unique ``shared logic, native UI'' architecture that avoids the compromises
+inherent to bridge-based or WebView-driven approaches.
+
+Based on the evaluation, Kotlin Multiplatform with Compose Multiplatform was
+selected for the AirScout mobile application. KMP demonstrated native-level
+startup times and CPU utilization on Android, strong security characteristics
+through LLVM compilation on iOS and ProGuard obfuscation on Android, and a
+rapidly maturing ecosystem backed by both JetBrains and Google. Its
+\texttt{expect/actual} mechanism proved particularly valuable, enabling
+platform-specific functionality to be cleanly abstracted without sacrificing
+type safety or requiring a runtime bridge.
+
+The integration into AirScout confirmed both the strengths and the trade-offs
+identified during the theoretical evaluation. While the multi-module Gradle
+build system introduced additional complexity and iOS toolchain requirements
+added friction, the benefits of sharing business logic, navigation, and UI code
+across platforms outweighed these costs. Practical solutions such as embedding
+the existing AirScout web map via WebView allowed for incremental adoption
+without a full rewrite of established components.
+
+Ultimately, the results of this work demonstrate that modern cross-platform
+frameworks have matured to a point where they can deliver production-quality
+applications without the severe performance or security penalties historically
+associated with non-native development. KMP, in particular, represents a
+compelling middle ground --- offering genuine native compilation and seamless
+platform interoperability while enabling significant code reuse across Android
+and iOS.

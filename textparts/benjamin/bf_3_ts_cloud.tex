@@ -1,0 +1,39 @@
+\chapter{TS \& Cloud}
+
+\section{Advantages and Disadvantages of Cloud Hosting}
+
+Cloud hosting offers several advantages compared to on-premises hosting, especially for time-series databases. Why especially for time-series databases? Time-series databases often need to handle large volumes of data that can grow rapidly over time. Cloud platforms provide scalable storage and compute resources that can easily accommodate this growth without the need for significant upfront investments in hardware.
+
+\subsection{Important Advantages of Cloud Hosting}
+
+\begin{itemize}
+  \item Scalability: Cloud platforms allow for easy scaling of resources based on demand, which is crucial for time-series databases that may experience fluctuating workloads.
+  \item Cost Efficiency: Cloud hosting often operates on a pay-as-you-go model, allowing organizations to only pay for the resources they use. This can be more cost-effective than maintaining on-premises infrastructure.
+  \item High Availability: Many cloud providers offer built-in redundancy and failover mechanisms, ensuring that time-series databases remain accessible even in the event of hardware failures.
+  \item Managed Services: Cloud providers often offer managed database services, reducing the operational burden on organizations and allowing them to focus on their core business.
+\end{itemize}
+
+~\cite{Cloud:01}
+~\cite{Cloud:02}
+
+\subsection{Important Disadvantages of Cloud Hosting}
+
+Despite its frequently touted benefits, cloud hosting also presents several drawbacks. The most significant is the dependence on a third‑party provider, which reduces an organization's control over infrastructure and requires a reliable internet connection. Slow or unstable connectivity can cause performance degradation and downtime for the time‑series database. This issue is less pronounced when the entire application is hosted within the same cloud environment. However, many database vendors offer their own hosted solutions, resulting in the application and database operating in separate environments.
+
+Other disadvantages of general cloud computing include:
+
+\begin{itemize}
+  \item Security and privacy concerns (e.g., data breaches, unauthorized access)
+  \item Vendor lock-in risk
+  \item Reduced control over the underlying cloud infrastructure
+  \item Increased complexity when integrating with existing or legacy systems
+  \item Potential for unexpected costs and billing complexity
+\end{itemize}~\cite{Cloud:05}
+
+\subsection{Hybrid}
+
+The idea of a hybrid approach is to combine the best of both worlds. Sensitive and frequently used data is stored locally, while less sensitive and infrequently used data is stored in the cloud. This approach can help mitigate some disadvantages of cloud hosting, such as data security and latency, while still benefiting from the scalability and cost efficiency of cloud platforms.
+
+The hybrid approach can be implemented in various ways, depending on the specific requirements and constraints of the application. For example, an organization may choose to store recent time-series data locally for fast access and analysis, while archiving older data in the cloud for long-term storage and backup.
+
+Aside from that, a hybrid approach also comes with its own challenges and downsides. These include increased complexity in managing data across multiple environments, potential data consistency issues, and the need for robust data synchronization mechanisms.

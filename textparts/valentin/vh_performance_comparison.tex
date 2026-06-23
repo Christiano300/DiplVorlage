@@ -1,0 +1,58 @@
+\chapter{Performance Comparison}
+\label{chap:performance}
+
+Performance is a critical metric in mobile application development, directly impacting user experience, retention rates, and battery consumption~\cite{PF:01}. In this chapter, we evaluate and compare the performance characteristics of the selected frameworks: React Native, Ionic, NativeScript, Flutter, Xamarin (.NET MAUI), Tauri, Kotlin Multiplatform (KMP) Compose, and purely Native development. The comparison is based on key performance indicators (KPIs) including \textbf{startup time}, \textbf{CPU} and \textbf{memory utilization}, and UI rendering \textbf{smoothness} (frame rates).
+
+To properly analyze these frameworks, it is necessary to group them by their underlying architectural paradigms, as the architecture dictates the theoretical limits of their performance.
+
+\section{The Baseline: Native Development}
+Native development using Swift (iOS) and Kotlin/Java (Android) serves as the performance baseline for this study. Because native applications interface directly with the operating system's APIs without intermediary abstractions, they inherently offer the lowest latency, fastest startup times, and most efficient memory management. Hardware acceleration and multithreading can be heavily optimized, ensuring consistent 60 or 120 frames per second (fps) depending on the device display capabilities.
+
+\section{WebView-Based Frameworks: Ionic and Tauri}
+WebView frameworks rely on web technologies (HTML, CSS, JavaScript) rendered inside a native browser component. 
+\begin{itemize}
+    \item \textbf{Ionic:} Ionic runs within an embedded WebView (like WKWebView on iOS). While modern WebViews are highly optimized, Ionic applications consistently exhibit higher memory footprints and slower startup times compared to native apps. CPU usage spikes during complex DOM manipulations, making it less suitable for highly interactive or graphically intensive applications. \cite{PF:02}
+    \item \textbf{Tauri:} Tauri v2 expands into the mobile space by utilizing the system's native WebView (via the WRY library) combined with a Rust backend. While the Rust core executes business logic with near-native efficiency and minimal memory overhead, the UI is still bound by the limitations of DOM rendering in a WebView, resulting in UI performance similar to Ionic
+\end{itemize}
+
+\section{Bridge-Based Frameworks: React Native and NativeScript}
+Bridge-based architectures use a JavaScript engine to execute business logic, communicating with native UI components via a bridge.
+\begin{itemize}
+    \item \textbf{React Native:} Historically, the asynchronous JSON bridge in React Native introduced bottlenecks during high-frequency UI updates (e.g. complex scrolling or animations). However, the introduction of the JavaScript Interface (JSI) and the New Architecture has significantly reduced this serialization overhead, allowing synchronous calls between JavaScript and Native code. Performance is highly competitive, though memory consumption remains higher than native due to the running JavaScript runtime (Hermes). \cite{PF:RN:01}
+    \item \textbf{NativeScript:} NativeScript provides direct access to native APIs via reflection without a traditional serialization bridge. While this allows for deep integration, the constant marshalling of data between the V8 JavaScript engine and the native ecosystem can cause CPU overhead.
+\end{itemize}
+
+\section{Compiled and Custom Rendering: Flutter and KMP}
+These frameworks aim to bypass standard OEM widgets and bridges to achieve near-native performance.
+\begin{itemize}
+    \item \textbf{Flutter:} Flutter compiles Dart code Ahead-of-Time (AOT) into native ARM libraries. Instead of using native UI components, it renders its own widgets directly to the screen via the Skia (or the newer Impeller) graphics engine. This guarantees extremely high UI performance and consistent 60/120 fps. The primary performance tradeoff is a larger application bundle size (App Size) and a slightly higher initial memory footprint to load the Flutter engine. \cite{PF:FT:01}
+    \item \textbf{Kotlin Multiplatform (KMP) Compose:} KMP allows sharing business logic compiled to native binaries via Kotlin/Native. When paired with Compose Multiplatform, it uses a canvas-based rendering approach (similar to Flutter) on iOS, while being \textbf{completely native on Android}. CPU and memory performance on Android are virtually indistinguishable from purely native apps. On iOS, Compose rendering is still maturing, but business logic execution is highly performant due to the lack of a garbage-collected virtual machine overhead. \cite{PF:KMM:01}
+\end{itemize}
+
+\section{Managed Runtimes: Xamarin / .NET MAUI}
+\textbf{.NET MAUI} (the evolution of Xamarin.Forms) compiles C\# code to native assembly on iOS (via AOT) and utilizes Just-In-Time (JIT) compilation on Android. It maps C\# UI abstractions to native OS controls. Because it utilizes native UI components, it achieves excellent rendering performance. However, the requirement to load the Mono/.NET runtime during application initialization generally results in slower "Cold Start" times compared to strictly native or Flutter applications. Memory usage is also slightly elevated due to the managed garbage collector. \cite{PF:NET:01}
+
+\section{Comparative Summary}
+
+The performance of these frameworks is inherently tied to their architectural choices. Table \ref{tab:perf_summary} provides a generalized comparative overview of the frameworks across crucial performance metrics.
+
+\begin{table}[htbp]
+\centering
+\caption{Generalized Performance Comparison of Mobile Frameworks}
+\label{tab:perf_summary}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|X|X|X|X|X|}
+\hline
+\textbf{Framework} & \textbf{Startup Time} & \textbf{UI Smoothness} & \textbf{Memory Usage} & \textbf{CPU Efficiency} \\ \hline
+\textbf{Native} & Excellent & Excellent & Low & High \\ \hline
+\textbf{Kotlin Multiplatform} & Excellent & Excellent & Low & High \\ \hline
+\textbf{Flutter} & Good & Excellent & Medium & High \\ \hline
+\textbf{.NET MAUI} & Fair & Good & Medium & Medium \\ \hline
+\textbf{React Native} & Good & Good & Medium & Medium \\ \hline
+\textbf{NativeScript} & Good & Fair & Medium & Medium \\ \hline
+\textbf{Tauri (Mobile)} & Fair & Fair & Low (Core)/High (UI)& Medium \\ \hline
+\textbf{Ionic} & Fair & Fair & High & Low \\ \hline
+\end{tabularx}
+\end{table}
+
+In conclusion, while purely Native development and KMP offer the highest absolute performance, Flutter provides the most performant cross-platform UI rendering. Bridge-based and WebView-based solutions trade absolute performance for web-ecosystem compatibility and developer velocity.

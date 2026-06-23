@@ -1,0 +1,156 @@
+\chapter{Integration into project}\label{chap:integration}
+
+Based on the comparative analysis conducted in the previous chapters,
+\textbf{Kotlin Multiplatform (KMP)}—specifically with \textbf{Compose
+    Multiplatform (CMP)}—emerged as the most balanced choice for the AirScout
+project. It successfully bridges the gap between high-performance native
+execution and the efficiency of a shared codebase.
+
+Table~\ref{tab:kmp_selection_summary} summarizes the findings across all
+evaluation categories that led to this selection.
+
+\begin{table}[ht]
+    \centering
+    \caption{Summary of Framework Evaluation Results leading to KMP/CMP Selection}
+    \label{tab:kmp_selection_summary}
+    \begin{tabularx}{\textwidth}{|X|X|X|}
+        \hline
+        \textbf{Category}              & \textbf{Key Comparative Findings}                                                                                                                  & \textbf{KMP/CMP Result}                     \\ \hline
+        \textbf{DX (Chap.~\ref{chap:dx})}          & Offers a unified workflow without context switching between languages. Includes powerful tools like Compose Previews and the KMP Wizard.           & \textbf{Very High} (Table~\ref{tab:dx_comparison}) \\ \hline
+        \textbf{Performance (Chap.~\ref{chap:performance})} & Matches native benchmarks for startup time and CPU efficiency. On Android, it is virtually indistinguishable from purely native applications.      & \textbf{Excellent} (Table~\ref{tab:perf_summary})   \\ \hline
+        \textbf{Maturity (Chap.~\ref{chap:maturity})}    & Backed by industry leaders JetBrains and Google. As of 2025/2026, it is considered a production-ready standard for cross-platform UI.              & \textbf{High} (Table~\ref{tab:maturity_summary})    \\ \hline
+        \textbf{Security (Chap.~\ref{chap:security})}    & Compiled to native binaries (LLVM) on iOS and JVM bytecode with ProGuard support on Android. Provides high resilience against reverse engineering. & \textbf{High} (Table~\ref{tab:security_comparison}) \\ \hline
+    \end{tabularx}
+\end{table}
+
+\section{Summary of Choice}
+
+The decision to integrate \textbf{KMP/CMP} into AirScout was driven by its
+ability to provide the ``Gold Standard'' of native performance and security
+while maintaining a modern, declarative UI development cycle. Unlike WebView or
+bridge-based alternatives, it avoids significant overhead and provides the
+project with long-term maintainability through direct interoperability with
+host platform APIs.
+
+\section{Application Overview}
+
+For the AirScout mobile application, the following file structure has emerged:
+
+% tree.exe -I build* -I *cache* -I kcef-bundle -I *gradle* -I res -I iosApp -I release-debug.ps1 -I local.properties -I Dockerfile -I README.md
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth,height=1\textheight,keepaspectratio]{images/file-structure.png}
+    \caption{Overview of project files}\label{fig:file_structure}
+\end{figure}
+
+\clearpage
+\section{AirScout Mobile code examples}
+
+\subsection{Navigation}
+
+\source{Kotlin}{\texttt{Simplified overview of the navigation structure (App.kt)}}{sources/navigation.kt}
+
+The implementation in the listing above illustrates the multi-stack navigation
+architecture utilized in the \texttt{AirScout} project. The application
+maintains independent \\ \texttt{NavigationStack} instances for the
+\texttt{Home}, \texttt{Map}, and \texttt{Profile} tabs, ensuring that the
+navigation state of each section is preserved during tab switching. The
+\texttt{App} composable manages the \texttt{currentTab} state and utilizes
+\texttt{AnimatedContent} for seamless transitions between screens. A critical
+feature is the integration of a \\ \texttt{PlatformBackHandler}, which provides
+native back-button support by delegating navigation events to the active tab's
+stack, allowing for granular control over the back-stack depth and root-level
+resets.
+
+\subsection{The Map}
+
+To implement the Map page within the AirScout mobile app, we evaluated two
+primary approaches:
+
+\begin{itemize}
+    \item \textbf{Full Native Rewrite}: This would involve integrating a map-viewing library (such as a mobile-optimized version of Leaflet) and maintaining separate data visualization logic. While this offers high performance, it would require porting complex shader code and necessitate manual updates to the mobile app whenever the web interface evolves to ensure feature parity.
+
+    \item \textbf{WebView Embedding}: This approach embeds the existing AirScout web map directly into the app. It ensures a nearly identical user experience across platforms while saving dozens of development hours. A significant advantage is ``instant deployment''---any new features or updates released on the website become available in the mobile app immediately.
+\end{itemize}
+
+Due to its significant advantages, the WebView approach was chosen. Thanks to
+the
+compose-webview-multiplatform\footnote{github.com/KevinnZou/compose-webview-multiplatform}
+library, the resulting code is very compact.
+
+\source{Kotlin}{\texttt{Source code snippet of Map.kt}}{sources/map.kt}
+
+\section{The Expect/Actual Mechanism: Bridging Platform Gaps}
+
+A core challenge in cross-platform development is accessing platform-specific
+APIs (such as the camera for QR scanning or local file systems) from a shared
+codebase. Kotlin Multiplatform solves this through the \textbf{expect/actual}
+pattern, which provides a type-safe way for the \texttt{commonMain} module to
+define a requirement that must be fulfilled by each target platform.
+
+\subsection{Architectural Implementation}
+
+The process begins in the \texttt{commonMain} source set, where an
+\texttt{expect} declaration (either a function, class, or property) defines the
+signature of a platform-specific feature. This allows the shared business logic
+and UI components—such as the \texttt{App.kt} or \texttt{ManageAirScouts.kt}
+files—to call these functions as if they were standard Kotlin, without knowing
+the underlying implementation details.
+
+Here is an example of an \texttt{expect} function definition used in \\
+\texttt{PlatformBackHandler.kt}: \source{kotlin}{\texttt{Code
+        snippet of expect function for
+        PlatformBackHandler}}{sources/expect-actual/expect-back.kt}
+
+\subsection{Platform-Specific Fulfillment}
+
+Each target module--\texttt{androidMain}, \texttt{iosMain}, and
+\texttt{jvmMain}--must then provide an ``actual'' implementation that
+satisfies the signature defined in \texttt{commonMain}.
+
+\textbf{Android Implementation}:
+\source{Kotlin}{\texttt{BackHandler.android.kt}}{sources/backhandler-android.kt}
+
+In \texttt{androidMain}, the \texttt{actual} implementation (e.g.
+\\\texttt{QrScanner.android.kt}) can directly access the Android SDK and
+utilize the \\\texttt{AndroidManifest.xml} permissions.
+
+\clearpage
+\textbf{iOS Implementation}:
+\source{Kotlin}{\texttt{BackHandler.ios.kt}}{sources/backhandler-ios.kt}
+
+Within \texttt{iosMain}, the \texttt{actual} implementation (e.g.
+\texttt{QrScanner.ios.kt}) can interface directly with iOS-specific controllers
+like the \texttt{MainViewController.kt} using Swift-to-Kotlin interoperability.
+
+This pattern is a primary reason for choosing KMP for project AirScout. It
+provides a ``gradual adoption'' experience where shared code acts as the
+foundation, while the \textbf{expect/actual} mechanism acts as a reliable
+``escape hatch'' to leverage the full power of the native platform when
+necessary.
+
+\section{Challenges Encountered}
+
+While KMP provided a productive development experience overall, the integration
+was not without friction. The most significant challenges encountered during
+development include:
+
+\begin{itemize}
+    \item \textbf{Build System Complexity:} The Gradle-based multi-module build
+    configuration required for KMP projects is considerably more involved than
+    a standard single-platform setup. Resolving dependency conflicts between
+    the \texttt{commonMain}, \texttt{androidMain}, and \texttt{iosMain} source
+    sets occasionally required non-trivial debugging of Gradle build scripts.
+
+    \item \textbf{iOS Build Toolchain:} Building and testing the iOS target
+    requires a macOS machine with Xcode installed. Integrating CocoaPods
+    dependencies and managing code signing certificates added friction to the
+    iOS deployment pipeline.
+
+    \item \textbf{Library Ecosystem Maturity:} While the KMP library ecosystem
+    is growing rapidly, not every popular Android or iOS library has a
+    multiplatform equivalent. In some cases, platform-specific wrapper code
+    needed to be written via the \texttt{expect}/\texttt{actual} pattern to
+    bridge this gap.
+\end{itemize}

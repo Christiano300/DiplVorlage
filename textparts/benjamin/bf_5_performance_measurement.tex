@@ -1,0 +1,61 @@
+\chapter{Performance Measurement for Time-Series Databases}
+
+Probably the most important aspects of a database are its reliability,
+security as well as crash-safety. However, as most databases already provide a
+certain level of these features, performance often becomes the deciding factor
+when choosing a database for a specific use case. Important performance
+indicators for time-series databases include ingestion rate, query response
+time, compression efficiency, and scalability.
+
+\section{Key Performance Indicators (KPIs)}
+
+Unlike traditional transaction-heavy databases, TSDBs are evaluated based on
+their ability to handle massive streams of time-stamped data and complex
+aggregations. The primary KPIs include~\cite{TSBS:01}:
+
+\begin{itemize}
+    \item \textbf{Ingestion Rate:} The volume of data points inserted per second. High ingestion rates (measured in metrics or rows per second) are critical for reducing visibility latency in real-time processing applications.
+    \item \textbf{Query Response Time:} Real-time analytics and alerting demand
+          sub-second query latency. Response times are evaluated across various patterns,
+          including recent data point lookups, historical scans, and windowed
+          aggregations~\cite{RTABench:01}.
+    \item \textbf{Compression Efficiency:} Due to the high volume of historical data, efficient compression algorithms (like delta or run-length encoding) are essential to minimize storage costs and optimize I/O, balancing compression ratios with computational overhead~\cite{Compression:01}.
+    \item \textbf{Scalability:} To handle growth from millions to billions of data points, TSDBs employ time-based partitioning and sharding. Scalability measures performance consistency as datasets grow (data scalability) and the speedup achieved by adding hardware nodes, theoretically bounded by Amdahl's Law~\cite{Amdahl:01}.
+\end{itemize}
+
+\section{Benchmarking Tools and Methodologies}
+
+Standardized tools ensure objective, reproducible performance comparisons
+across different databases by employing deterministic data and query
+generation.
+
+\subsection{Time Series Benchmark Suite (TSBS)}
+
+The TSBS is the de facto standard for benchmarking TSDBs (e.g., TimescaleDB,
+InfluxDB, MongoDB). It measures both bulk load performance and query execution
+latencies using predefined scenarios~\cite{TSBS:01}:
+
+\begin{itemize}
+    \item \textbf{DevOps Scenario:} Simulates data center monitoring by generating infrastructure metrics (CPU, memory, disk) and diverse metadata tags for a configurable number of hosts. Queries evaluate aggregations and multi-dimensional filtering.
+    \item \textbf{IoT Scenario:} Models fleet management diagnostics, introducing real-world complexities such as temporary batch ingestion, out-of-order data, and missing points, while blending real-time monitoring with predictive analytics.
+\end{itemize}
+
+\subsection{Real-Time Analytics Benchmarking (RTABench)}
+
+Modern applications often require capabilities beyond those tested in
+traditional TSBS workloads, particularly involving complex state computations
+and materialized views. Real-time analytics workloads typically require:
+\begin{enumerate}
+    \item Fast multi-table joins on fresh event data and normalized metadata.
+    \item Selective filtering based on specific entity IDs and narrow time windows.
+    \item Sub-second aggregations heavily reliant on incrementally updated materialized
+          views.
+\end{enumerate}
+
+To accurately measure these distinct query patterns, RTABench supplements
+standard tools by evaluating operations over an entity-normalized data model,
+demonstrating the vital trade-offs between flexibility and query
+optimization~\cite{RTABench:01}. Meaningful benchmark interpretation ultimately
+requires mapping test workloads directly to production use cases while
+accounting for environmental consistency and proper, fair database
+configuration.

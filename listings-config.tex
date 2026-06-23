@@ -1,0 +1,197 @@
+%Definition des Aussehens der internen Listings
+\definecolor{listinggray}{gray}{1.0}
+
+%-------------------------------------------------------------------------
+% Neues Listingformat
+% --- kleine Schrift
+% --- Keywords färbig
+%-------------------------------------------------------------------------
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{orange}{RGB}{240, 105, 12}
+\definecolor{green}{RGB}{156, 206, 43}
+
+\definecolor{onelt@fg}        {HTML}{383A42}   % default text
+\definecolor{onelt@red}       {HTML}{E45649}   % keywords / return
+\definecolor{onelt@orange}    {HTML}{B76B01}   % numbers / constants
+\definecolor{onelt@green}     {HTML}{50A14F}   % strings
+\definecolor{onelt@cyan}      {HTML}{0184BC}   % types / classes
+\definecolor{onelt@blue}      {HTML}{4078F2}   % functions / composables
+\definecolor{onelt@purple}    {HTML}{A626A4}   % modifier keywords
+\definecolor{onelt@comment}   {HTML}{909090}   % comments (italic)
+\definecolor{onelt@lineno}    {HTML}{505050}   % line numbers
+\definecolor{onelt@frame}     {HTML}{7F7F7F}   % frame / rule
+
+\lstdefinestyle{Base}{
+  numbers=left,                   % where to put the line-numbers
+  stepnumber=1,                   % the step between two line-numbers
+  numbersep=5pt,                  % how far the line-numbers are from the code
+  backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+  showspaces=false,               % show spaces adding particular underscores
+  showstringspaces=false,         % underline spaces within strings
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  frame=single,                   % adds a frame around the code
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  captionpos=b,                   % sets the caption-position to bottom
+  breaklines=true,                % sets automatic line breaking
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  title=\lstname,                 % show the filename of files included with \lstinputlisting;
+  % ── Colours ──────────────────────────────────────────────
+  basicstyle      = \ttfamily\footnotesize\color{onelt@fg},
+  commentstyle    = \itshape\color{onelt@comment},
+  stringstyle     = \color{dkgreen},
+  keywordstyle    = [1]{\bfseries\color{onelt@purple}},
+  keywordstyle    = [2]{\bfseries\color{onelt@red}},
+  keywordstyle    = [3]{\color{onelt@cyan}},
+  keywordstyle    = [4]{\bfseries\color{onelt@blue}},
+  % ── Frame & layout ───────────────────────────────────────
+  rulecolor       = \color{onelt@frame},
+  postbreak       = \mbox{\textcolor{onelt@lineno}{$\hookrightarrow$}\space},
+  numberstyle     = \tiny\color{onelt@lineno},
+}
+
+% ── Keyword groups ──────────────────────────────────────────
+%  [1]  Core language keywords            → purple (bold)
+%  [2]  Modifier / visibility / SQL Types → red    (bold)
+%  [3]  Builtins / libraries              → cyan
+%  [4]  KMP Compose / SQL Functions       → blue   (bold)
+
+\lstdefinelanguage{GLSL}{
+  otherkeywords={\#if,\#else,\#endif,\#define,\#version},
+  morekeywords=[1]{\#if,\#else,\#endif,\#define,\#version,for,if,else,return},
+  morekeywords=[2]{const,float,void,vec,vec2,vec3,vec4,int,sampler2D,uint,in,out,uniform,varying,discard},
+  morekeywords=[3]{fragColor},
+  morekeywords=[4]{sin,cos,tan,asin,acos,atan,pow,exp,log,sqrt,abs,sign,floor,ceil,clamp,fract,
+  mod,min,max,mix,step,smoothstep,length,dot,cross,texelFetch,texture,degrees,radians},
+  sensitive=true,
+  morestring=[b]{``},
+  morestring=[b]{'},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/}
+}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={break,case,catch,continue,default,do,else,finally,if,in,return,switch,throw,try,
+  while,export,class,extends,implements,interface,async,await,constructor,new},
+  morekeywords=[2]{const,function,var,let,this,private,void,number,string,true,false},
+  morekeywords=[3]{console,window,document,gl,Math,THREE},
+  sensitive=true,
+  morestring=[b]{`},
+  morestring=[b]{'},
+  morestring=[b]{"}, % chktex 18 (Ignore warning)
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/}
+}
+
+\lstdefinelanguage[AS]{HTML}{
+  language=HTML,
+  morekeywords=[2]{canvas},
+}
+
+\lstdefinelanguage[AS]{Python}{
+  language=Python,
+  morekeywords=[3]{gpd,rasterio,np,scipy,matplotlib,plt,pykrige}
+}
+
+\lstdefinelanguage[AS]{Java}{
+  language=Java,
+  morekeywords=[3]{List,Map,HashMap,Function,Float,Double,Math}
+}
+
+\lstdefinelanguage{PGTSSQL}{
+  language=SQL,
+  deletekeywords={INTERVAL,avg,count,sum,MIN,MAX},
+  morekeywords=[1]{WITH,MATERIALIZED,EXTENSION,IF},
+  morekeywords=[2]{TIMESTAMPTZ,TEXT,DOUBLE,PRECISION,INTERVAL},
+  morekeywords=[3]{tsdb,timescaledb,time_bucket},
+  morekeywords=[4]{AVG,COUNT,SUM,STDDEV,POW,SQRT,SIN,COS,RADIANS,DEGREES,MIN,MAX,ASIN},
+}
+
+\lstdefinestyle{yaml}{
+  basicstyle=\color{blue}\footnotesize,
+  rulecolor=\color{black},
+  string=[s]{'}{'},
+  stringstyle=\color{blue},
+  comment=[l]{:},
+  commentstyle=\color{black},
+  morecomment=[l]{-}
+}
+
+\lstdefinelanguage{Kotlin}{
+  sensitive   = true,
+  alsoletter   = {@},           % <-- makes @ part of identifiers → @Composable matches
+  morecomment = [l]{//},
+  morecomment = [s]{/*}{*/},
+  morestring  = [b]{"}, % chktex 18 (Ignore warning)
+  morestring  = [b]{'},
+  % ── [1] Core keywords ──────────────────────────────────
+  morekeywords=[1]{
+    as, break, class, continue, do, else, false, for,
+    fun, if, in, interface, is, null, object, package,
+    return, super, this, throw, true, try, typealias,
+    typeof, val, var, when, while, by, catch, constructor,
+    delegate, dynamic, field, file, finally, get, import,
+    init, param, property, receiver, set, setparam, value,
+    where, annotation, companion, enum, internal,
+    out, private, protected, public,
+  },
+  % ── [2] Modifier / coroutine keywords ──────────────────
+  morekeywords=[2]{
+    override, suspend, inline, infix, operator,
+    tailrec, crossinline, noinline, reified, vararg,
+    external, actual, expect, sealed, data, open,
+    abstract, final, inner, lateinit, const
+  },
+  % ── [3] Built-in types ─────────────────────────────────
+  morekeywords=[3]{
+    Any, Unit, Nothing, Boolean, Byte, Short, Int, Long,
+    Float, Double, Char, String, Array, List, MutableList,
+    Map, MutableMap, Set, MutableSet, Pair, Triple,
+    Sequence, Flow, StateFlow, SharedFlow, Job, Deferred,
+    CoroutineScope, CoroutineContext, Dispatchers
+  },
+  % ── [4] Compose / CMP keywords ─────────────────────────
+  morekeywords=[4]{
+    @Composable, @Preview, @SuppressLint,
+    @HiltViewModel, @Inject, @Module, @Provides, @Singleton,
+    @AndroidEntryPoint, @HiltAndroidApp,
+    @StringRes, @DrawableRes, @ColorRes, @DimenRes,
+    @JvmStatic, @JvmOverloads, @JvmField, @JvmName,
+    @Volatile, @Synchronized, @Deprecated,
+    remember, rememberSaveable,
+    mutableStateOf, mutableIntStateOf, mutableFloatStateOf,
+    mutableLongStateOf, collectAsState, collectAsStateWithLifecycle,
+    LaunchedEffect, DisposableEffect, SideEffect,
+    derivedStateOf, snapshotFlow, produceState,
+    key, rememberCoroutineScope, rememberUpdatedState,
+    Column, Row, Box, Scaffold, Surface, Card,
+    LazyColumn, LazyRow, LazyVerticalGrid, LazyHorizontalGrid,
+    Text, Button, TextField, OutlinedTextField,
+    IconButton, FloatingActionButton, ExtendedFloatingActionButton,
+    TopAppBar, BottomAppBar, NavigationBar, NavigationBarItem,
+    NavigationRail, NavigationRailItem, ModalNavigationDrawer,
+    AlertDialog, BottomSheetScaffold, ModalBottomSheet,
+    Image, Icon, Spacer, Divider, HorizontalDivider,
+    VerticalDivider, CircularProgressIndicator,
+    LinearProgressIndicator, Slider, Switch, Checkbox,
+    RadioButton, DropdownMenu, DropdownMenuItem,
+    ExposedDropdownMenuBox, AnimatedVisibility,
+    AnimatedContent, Crossfade, animate,
+    animateColorAsState, animateDpAsState,
+    animateFloatAsState, animateIntAsState,
+    animateContentSize, transition, updateTransition,
+    Modifier, fillMaxSize, fillMaxWidth, fillMaxHeight,
+    wrapContentSize, wrapContentWidth, wrapContentHeight,
+    padding, margin, size, width, height, offset,
+    align, weight, clickable, pointerInput, focusable,
+    background, border, clip, shadow, alpha, scale,
+    rotate, graphicsLayer, drawBehind, drawWithContent,
+    NavHost, composable, navigation, NavController,
+    rememberNavController, ViewModel, viewModel,
+    hiltViewModel, koinViewModel, KoinApplication
+  }
+}
+
+\lstset{style=Base}

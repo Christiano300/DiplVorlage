@@ -1,0 +1,204 @@
+\section{Time Series Data Analytics}
+
+Time series analytics refers to the process of finding meaningful patterns and
+insights from data that is collected over time. Unlike traditional data and
+cross-sectional data, time series data exhibits temporal dependencies, meaning
+that the value at time $t$ can be influenced by values at previous time
+points $t-1, t-2, \ldots$.
+
+\subsection{Why Analytics for Time Series Data?}
+
+Raw data shows what is happening, while analysis reveals the context and the
+underlying reasons. It allows us to identify trends, seasonal patterns, and
+anomalies in the data, which can be crucial for making informed decisions in
+various domains such as finance, IoT, weather forecasting, and healthcare.\cite{AI&ML:23}
+
+\subsubsection{Analytics in our project}
+
+AirScout stores a large amount of time-series data inserted by sensor boxes.
+Unfortunately, this system is not fully secure, as somebody could reverse
+engineer the boxes and insert false data if they have an AirScout account.
+Therefore, we can use analytics to detect anomalies in the data, which could
+indicate that somebody is inserting false data.
+
+Several statistical techniques can be used for this, such as:
+
+\begin{itemize}
+    \item Mean and Standard Deviation Analysis: Calculate the mean and standard deviation
+          of the time series data. Data points that fall outside a certain number of
+          standard deviations from the mean can be flagged as anomalies.
+    \item Z-Score: Builds on the concept of the mean and standard deviation, calculating
+          the Z-score for each data point to identify how many standard deviations a
+          point is from the mean. The formula for the Z-score is:
+          \[ Z = \frac{(X - \mu)}{\sigma} \]
+          where \(X\) is the data point, \(\mu\) is the mean, and \(\sigma\) is the
+          standard deviation. Data points with a Z-score above a certain threshold (e.g.,
+          $|Z| > 3$) can be considered anomalies.
+    \item Moving Average: The moving average smooths out short-term fluctuations and
+          highlights longer-term trends or cycles. Anomalies can be detected by comparing
+          the actual data points to the moving average and flagging those that deviate
+          significantly.
+    \item Exponential Smoothing: This technique gives more weight to recent observations
+          while still considering past data. Anomalies can be identified by comparing the
+          actual values to the exponentially smoothed values. The formula for exponential
+          smoothing is:
+          \[ S_t = \alpha * X_t + (1 - \alpha) * S_{t-1} \]
+          where \(S_t\) is the smoothed value at time \(t\), \(X_t\) is the actual value
+          at time \(t\), and \(\alpha\) is the smoothing factor (0 < \(\alpha\) < 1). A
+          higher \(\alpha\) gives more weight to recent observations. It's exponential
+          because the weights decrease exponentially for older data points.
+\end{itemize}~\cite{AI&ML:24}
+
+Those techniques can be implemented in the database layer directly using SQL
+queries.
+
+\begin{lstlisting}[language=PGTSSQL, caption=Anomaly Detection using Z-Score in TimescaleDB]
+SELECT *
+FROM (
+    SELECT *,
+        AVG(val) OVER() as average,
+        STDDEV(val) OVER() as std
+    FROM measurements
+) stats
+WHERE ABS(val - average) > (3 * std);
+\end{lstlisting}
+
+This query calculates the average and standard deviation of the \texttt{val} column in
+the \texttt{measurements} table and selects rows where the absolute difference between
+the value and the average exceeds three times the standard deviation,
+indicating potential anomalies.
+
+\subsection{Performance issues with Analytics}
+
+Analytics can be computationally intensive if the dataset is large and the
+queries are complex. Regular databases like plain MySQL or key-value stores have to
+scan through all rows or values, even to calculate simple statistics like the mean
+or standard deviation. Time-series databases, on the other hand, are optimized
+for such operations and can often perform them much faster due to their data
+structure and indexing strategies. This thesis already mentioned compression
+techniques of time-series databases (see Section~\ref{sec:compression}), which
+can also help to speed up analytics queries, as less data has to be read from
+disk. Additionally, time series databases often have built-in functions for
+common time-series analytics tasks that are far more efficient because they use
+precomputed aggregations and indexes on time-based data, and also employ
+techniques like downsampling to reduce the amount of data that needs to be
+processed for analytics queries. This can lead to significant performance
+improvements, especially when dealing with large datasets and complex queries.
+It should also be noted that built-in functions are often faster because they are
+implemented in a lower-level language and optimized for performance, while
+user-defined functions or external analytics tools may not be as efficient.
+
+Taking the example above, the Z-score calculation requires a full scan of the
+\texttt{meas} table to compute the window functions \texttt{AVG} and
+\texttt{STDDEV} across the entire dataset. In a traditional row-oriented
+relational database, this operation has a time complexity of $O(N)$, where $N$
+is the number of rows. This often leads to significant I/O bottlenecks as the
+system must load complete row pages even if only a single column is needed (see
+Section~\ref{sec:benchmarking}).
+
+In contrast, a time-series database leveraging columnar storage would only need
+to read the specific blocks containing the \texttt{val} column, drastically
+reducing disk I/O. Furthermore, by utilizing \textit{continuous aggregates} (or
+materialized views), sufficient statistics such as counts, sums, and sums of
+squares can be precomputed and incrementally updated as new data is
+ingested~\cite{TimescaleDB:03}. This allows the query engine to derive the mean
+and standard deviation from pre-aggregated bucket statistics rather than
+scanning the raw hypertable. In practice, this changes the cost of the
+statistical baseline from scaling with the number of raw measurements to
+scaling with the number of aggregate buckets that must be read.
+
+\begin{lstlisting}[language=PGTSSQL, caption=Creating a Continuous Aggregate in TimescaleDB]
+CREATE MATERIALIZED VIEW measurements_stats
+WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 hour', time) AS bucket,
+    COUNT(*) as n,
+    SUM(val) as sum_val,
+    SUM(val * val) as sumsq_val
+FROM measurements
+GROUP BY bucket;
+\end{lstlisting}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/tigerdata-continuous-aggregate.png}
+    \caption{Visualization of precomputed continuous aggregates over time}\label{fig:continuous_aggregates}
+\end{figure}
+
+Statistics are often accessed frequently, and each fetch should be fast and
+should not be out of date. To avoid having to rescan every row every time, we
+can precompute aggregates and store them in a separate table. For exact global
+statistics over a time range, these precomputed bucket statistics still need to
+be combined, but this is far cheaper than reading all raw measurements again.
+
+\subsection{Batch Processing vs. Real-Time Processing}
+
+When dealing with time-series data, analytics can be performed in two primary
+paradigms: batch processing and real-time processing.
+
+\textbf{Batch processing} involves collecting data over a period and processing it all at once in large blocks or `batches'. This means that analytical queries are executed on historical data, usually on a scheduled basis (e.g., nightly or weekly). Batch processing is highly efficient for complex, resource-intensive operations like training machine learning models or generating comprehensive monthly reports. However, it introduces latency, since the insights derived from the data are not immediately available.
+
+\textbf{Real-time processing} (or stream processing), on the other hand, deals with data continuously as it arrives. Analytics are performed incrementally on the incoming data stream, allowing for near-instantaneous insights and actions. In the context of our project, AirScout, real-time processing is crucial for immediate anomaly detection. If a sensor box starts sending highly abnormal values, real-time analytics can trigger an alert immediately rather than waiting for the next batch cycle.
+
+Choosing between batch and real-time processing depends on the use case. While
+real-time processing provides lower latency, it is often more complex to
+implement and requires specialized streaming engines.~\cite{BatchVsRealTime:01}
+Many modern time-series setups use a combination of both architectures, where
+real-time processing is used for critical alerting and fast views, while batch
+processing serves for deep, long-term analytics.
+\subsection{Machine Learning and Transformers for Time Series Data}
+
+While statistical methods like Z-scores or moving averages are effective for
+basic anomaly detection and linear trend analysis, they often fall short when
+dealing with highly complex, non-linear, and multivariate time-series data.
+This is where Machine Learning (ML), and more recently, Deep Learning models
+based on the Transformer architecture come into play.\\\cite{AI&ML:23}
+
+Traditionally, Recurrent Neural Networks (RNNs) and Long Short-Term Memory
+(LSTM) networks were the standard choices for time-series forecasting due to
+their ability to maintain internal state across time steps. However, since
+their introduction in Natural Language Processing, Transformer models have
+revolutionized time-series analysis.
+
+Transformers use a self-attention mechanism that allows them to weigh the
+importance of all past observations simultaneously. This approach inherently
+captures long-range dependencies and complex multivariate interactions much
+better than traditional algorithms, which often struggle to scale with
+extensive historical data.
+
+In recent years, the concept of `foundation models' has emerged for time-series
+data. Models such as \textit{TimeGPT} by Nixtla~\cite{TimeGPT:01} and
+\textit{TimesFM} by Google Research~\cite{TimesFM:01} have been pre-trained on
+billions of data points across various domains (e.g., finance, IoT, and
+weather). These models implement zero-shot forecasting, meaning they can
+generate highly accurate forecasts or detect anomalies on completely unseen
+data out-of-the-box, without requiring additional fine-tuning. For projects
+tracking large amounts of sensor data, such as AirScout, integrating these
+pre-trained transformer architectures could significantly improve the accuracy of
+data validation and anomaly detection without the need to train domain-specific
+models from scratch. Necessary for the training of such models is a large
+amount of data, which is why we aren't using them in our project yet, but they
+are definitely worth considering for future iterations of AirScout, especially
+as the amount of collected data grows over time.
+
+\begin{lstlisting}[language=Python, caption=Zero-shot Anomaly Detection using the TimeGPT Python SDK]
+from nixtla import NixtlaClient
+import pandas as pd
+
+# Load time-series data from a CSV file
+df = pd.read_csv('sensor_measurements.csv')
+
+# nixtla client needs an API key, which you can get by signing up on their website
+nixtla_client = NixtlaClient(api_key='YOUR_API_KEY')
+
+# Detect anomalies out-of-the-box (Zero-shot)
+anomalies_df = nixtla_client.detect_anomalies(
+    df=df,
+    time_col='timestamp',
+    target_col='value',
+    freq='15T', # 15 minute frequency
+    level=99 # 99% prediction interval for the expected range
+)
+
+# Filter and display anomalies
+print(anomalies_df[anomalies_df['anomaly'] == 1])
+\end{lstlisting}

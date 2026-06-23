@@ -1,0 +1,146 @@
+\chapter{Intelligent Sensor-Data-Measuring}
+Collecting sensor data efficiently is an important aspect of modern sensing systems, especially in distributed or battery-powered environments. Instead of measuring data at fixed intervals, intelligent measurements strategies can adapt to changing conditions and optimize resource usage.
+
+This chapter introduces different approaches for improving sensor data acquisition and processing. It discusses adaptive and event-based measuring strategies, explains the concept of edge computing for local data processing, and presents techniques for reducing resource consumption in sensor systems.
+
+\section{Measuring strategies}\label{title:intelligent-strategies}
+In addition to measuring sensor data at a fixed interval, there are also intelligent strategies for acquiring sensor measurements. The two most common are adaptive sampling and event-based measuring. Due to the fact that a simple algorithm might not fit every environment and causes the data-quality to drop, more complex strategies might be needed in order to avoid mistakes in fragile, turbulent environments.
+
+\boldtitle{Adaptive Sampling}
+Especially in regions where the consistency of the desired sensor data to be measured is highly fluctuating, this measurement method is shining. There is also the option of choosing a higher sensing rate; however, this might negatively affect the battery life of the sensor. Thus being important to have an algorithm that can accurately describe the current environment, whilst also being efficient in resource usage.
+
+An algorithm for adaptive sampling requires three things:
+\begin{itemize}
+    \item An initial measuring rate
+    \item An internal control loop
+    \item A model representing the environment
+\end{itemize}
+
+Although the initial measuring rate is just used as a starting point to capture measurements, when not enough activity has happened, for the control loop to assume any worthy changes. Whilst the control loop is a custom implementation to adaptively change the rate based on surrounding activity. The adaptive adjusting is implemented as follows:
+\begin{itemize}
+    \item If the control loop detects a linear change, after some observations, the loop should recognize this and reduce the measurement rate.
+    \item Evaluation will happen by comparing the measured data with data from a model that represents the environment.
+    \item Is the offset between measurement and real value smaller than a predefined threshold then the sampling rate will be decreased. On the other hand, if it is bigger then the sampling rate will be increased
+\end{itemize}
+
+When implementing the control mechanism, there should be a balance between complexity of the control loop, sampling rate and complexity of the model. Whilst more complexity in the mechanisms can help for a more accurate measurement rate, it also uses more resources. Thus being important to find a good balance between those three.
+
+\noindent\cite{LRWeb:61}
+
+\boldtitle{Event-Based measuring}
+This measuring strategy takes a different approach rather than retrieving data in changing intervals and directly transmitting them, they only get emitted when they exceed a specified threshold. This concept is called SOD\footnote{Send-on-delta} and data gets transmitted when:
+
+\[
+\left|x\left(t_i\right) - x\left(t_{i-1}\right)\right| = \Delta
+\]
+$x(t_i)$ being the measurement taken at time $t$ \\
+$\Delta$ being the predefined threshold 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/SOD.png}
+    \caption{Principle of the SOD reporting}\label{fig:sod}
+\end{figure}
+
+As shown in figure~\ref{fig:sod}, the data is reported at times $t_{i-2}$, $t_{i-1}$ and $t_i$ as the difference to the last measurement exceeds $\Delta$.
+
+It is important to mention that in sensor networks, smart measuring strategies aren't a global state, each sensor should have it's own process of measuring data.
+
+\noindent\cite{LRWeb:60}
+
+\section{Edge Computing}
+Edge Computing (also called Local Processing) is a concept in which generated data is not immediately sent to the cloud, instead it is first processed before the transmission happens. The processing can include
+
+\begin{itemize}
+    \item Filtering
+    \item Aggregating
+    \item Analysis
+    \item Any methods for noise removal or smoothing~\ref{title:noise}
+\end{itemize}
+
+Local Processing reduces latency and enables real-time decision making. Furthermore, it also reduces centralized overhead.
+
+\boldtitle{Flow}
+The flow of an edge processing pipeline might look something like figure~\ref{fig:edge}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/Edge-Computing.png}
+    \caption{Flow chart of an edge processing pipeline}\label{fig:edge}
+\end{figure}
+
+\boldtitle{Ingestion}
+Ingestion is the process of obtaining the raw sensor data which will later be processed.
+
+\boldtitle{Filtering}
+Sensor data can be filtered based on different requirements. One approach might be to use a threshold filter. The threshold filter passes any reading that either exceeds a max range or falls below a min range. This filter might also validate, based on the change to the last reading and will pass if this value is exceeded.
+
+A time based filter might also be considerable if small changes aren't essential to emit. The time-based deduplication considers any two observations as duplicates if they are from the same sensor and have the same/similar value (respecting a defined tolerance). The duplicate reading will then be dropped.
+
+\boldtitle{Aggregation}
+The process of aggregating sensor data reduces the amount of sensor data shared with the cloud by combining multiple readings into a single one.
+
+The most common approach here is to group the data into multiple objects with a time window. The object can also include data about
+\begin{itemize}
+    \item Amount of data recorded
+    \item Minimum/Maximum values
+    \item Average of the values
+    \item Standard Deviation/Variance
+\end{itemize}
+
+\boldtitle{Decision Engine}
+Decision Engines set up the rules for the actions to be taken based on incoming data. The advantage of a decision engine is that additional optimization requirements can be implemented, whilst a disadvantage is that a persistent implementation has to be distributed to every member of the sensor network (if in one).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/Decision.png}
+    \caption{Example for a decision engine}\label{fig:decision}
+\end{figure}
+
+Common decisions to be made include:
+\begin{itemize}
+    \item Dropping irrelevant data
+    \item Adding the data to an aggregation queue and transmitting afterwards
+    \item Adding the data to a queue without aggregation and transmitting after
+    \item Transmit to cloud immediately
+    \item Trigger an alert immediately send data
+\end{itemize}
+
+Decisions can be extended to operate based on the edge-device's resources. Based on the resources available decisions can be made to fully operate with most to all resources available, reducing operations with less resources or almost completely stop processing when there are little to no resources left.
+
+\noindent\cite{LRWeb:63}
+
+\section{Resource-considerate strategies}
+
+Although implementing a smart measurement strategy extends the battery life of a sensor by a large proportion, there are still some more functionalities that can help optimize the resource usage of the sensor.
+
+\boldtitle{Duty cycling}
+This method allows the sensor to go into a stand-by mode that consumes little or no power. This mechanism can be implemented as an extension of adaptive sampling. Furthermore, duty calling can also be implemented periodically. The strength of this mechanism is that the sensor only operates when necessary and does not use any resources if not necessary.
+
+\boldtitle{Smaller measuring rate}
+Specifically, choosing a smaller sampling rate can go a long way to using less resources. A lower sampling rate allows the sensor to be in a non-power consuming mode most of the times. 
+
+\boldtitle{Efficient data processing}
+Efficient data processing can be done in two ways, directly on the sensor or on an integrated Micro-controller. 
+
+If the processing happens on the sensor, power is saved by transmitting less data. Less data or aggregated data is distributed, decreasing the work needing to be done on central processors.
+
+Letting the MCU\footnote{Micro Controller Unit} do the work is saving power in the way, that the tasks aren't done on the sensor. This causes the power to be taken from the MCU and not from the sensor. Another advantage of queuing tasks to the MCU is that complex computations are usually performed more efficiently, than on the sensor. 
+
+\boldtitle{Power-efficient communication}
+Keeping a low-power-consuming communication is a big part of saving a sensor's power. Vital mechanisms include:
+
+\begin{itemize}
+    \item Compressing or aggregating data before transmitting them
+    \item Pushing data into a queue and transmitting the data when the length of a queue reaches a defined threshold
+    \item Using low power communication protocols like ZigBee and BLE
+    \item Optimizing network topology and introducing smart routing
+    \item Adjust packet lengths to fit defined payload sizes (TCP and UDP-packet sizes)
+    \item Using energy efficient hardware
+\end{itemize}
+
+\boldtitle{Optimal code}
+Optimizing code to include a predictive implementation for power management or enabling context-aware operations to adapt sensor activity and in turn minimizing power consumption, will help for a long battery life.
+
+Even though it is essential to optimize the resource usage of sensors, it's also important to note that some the approaches are context-dependent and should be evaluated before implementing them. In some scenarios it's better to sacrifice power for an optimal performance. 
+
+\noindent\cite{LRWeb:61}

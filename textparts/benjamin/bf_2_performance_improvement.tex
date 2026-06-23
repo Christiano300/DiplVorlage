@@ -1,0 +1,709 @@
+\chapter{Performance Improvement Techniques in TSDBs}\label{sec:performance-improvement}
+
+This chapter is about the different ways databases, especially Time-Series
+databases, improve performance. Let's imagine building our own database from
+the ground up, beginning with a simple database that stores the data in a
+single JSON file.
+
+As an example, let's say we want to store temperature readings from a sensor
+that measures every second. A simple json representation of the data could look
+like this:
+\begin{verbatim}
+[
+  {"timestamp": "2023-01-01T00:00:00Z",
+  "id": 1, "temperature": 22.5},
+  {"timestamp": "2023-01-01T00:01:00Z",
+  "id": 2, "temperature": 22.5},
+  {"timestamp": "2023-01-01T00:02:00Z",
+  "id": 3, "temperature": 21.8},
+  {"timestamp": "2023-01-01T00:03:00Z",
+  "id": 4, "temperature": 22.0},
+  {"timestamp": "2023-01-01T00:04:00Z",
+  "id": 5, "temperature": 22.3}
+  ...
+]
+\end{verbatim}
+
+The storage consumption of this data is very high. It can be calculated by
+simply counting the number of characters in the JSON string. Stripping the
+whitespace, the above example takes \textbf{62 Bytes} to store one record and
+\textbf{62\,MB} for one million records.
+
+Querying the data in this JSON format is slow because the database has to parse
+the entire JSON file to find the relevant entries, while also reading the field
+names and converting the data types (e.g., string to datetime, float) every
+time. As the amount of data grows, these performance issues would become more
+and more pronounced.
+
+\section{Encoding: Binary vs JSON}
+
+Switching from storing the data in Json to more advanced and optimized
+encodings saves not only storage space but also improves performance because
+less data needs to be read and parsed for queries.
+
+In our example, this could look like the following:
+
+A binary encoding removes all redundant field names and stores each record in a
+compact, typed layout. To keep the comparison consistent with the JSON example
+above, the binary schema below still includes the measurement exttt{id}:
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{llr}
+    \toprule
+    \textbf{Field}                                & \textbf{Type}             & \textbf{Size} \\
+    \midrule
+    \texttt{timestamp}                            & int64 (Unix timestamp, s) & 8 bytes       \\
+    \texttt{id}                                   & uint32                    & 4 bytes       \\
+    \texttt{temperature}                          & float32 (IEEE 754)        & 4 bytes       \\
+    \midrule
+    \multicolumn{2}{l}{\textbf{Total per record}} & \textbf{16 bytes}                         \\
+    \bottomrule
+  \end{tabular}
+  \caption{Binary record layout for temperature sensor data}
+\end{table}
+
+As seen in the table above, the binary encoding requires only \textbf{16 Bytes}
+per record and \textbf{16\,MB} for one million records, which is still a
+significant reduction compared to the 62\,MB required for the JSON format
+(about 3.9 times smaller). This not only saves storage space but also improves
+query performance, as the database can read and process the compact binary data
+much more efficiently than the verbose JSON format.
+
+\section{Row vs Columnar Storage}
+
+Row-based databases like Postgres store all columns of a row together. That
+allows for fast querying for the entire entity but is not very efficient when
+aggregating data because unused data has to be read.
+
+Columnar database engines store data column-wise. If the data is queried by
+specific columns over a large time range, this becomes much more efficient.
+
+Let's look at an example:
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{ccc}
+    \toprule
+    ID & Name     & Age \\
+    \midrule
+    1  & Benjamin & 18  \\
+    2  & Noa      & 19  \\
+    3  & Sarah    & 22  \\
+    \bottomrule
+  \end{tabular}
+  \caption{Example of Row-based storage}
+\end{table}
+
+The row based database would store the data like this in memory:
+\begin{verbatim}
+[1, "Benjamin", 18, 2, "Noa", 19, 3, "Sarah", 22]
+\end{verbatim}
+
+When querying for the average age, we would have to scan all rows, which means
+we read data that is not needed. This reduces performance and may also require
+locking more data.
+
+In contrast, a columnar database would store the data like this:
+\begin{verbatim}
+[1, 2, 3]  // IDs
+["Benjamin", "Noa", "Sarah"]  // Names
+[18, 19, 22]  // Ages
+\end{verbatim}
+
+Time series databases benefit from the advantages of columnar storage as time
+series data is often queried over specific columns (e.g., temperature,
+humidity) over long time periods. Also, columnar storage allows for better
+compression techniques, as similar values are stored together, which is common
+in time series data.
+
+\section{Compression}\label{sec:compression}
+
+Time series databases need to store and process large amounts of data.
+Compression techniques can drastically reduce the storage space required for
+time-series data, leading to cost savings and improved query performance.
+
+\subsection{Integer compression}
+
+\begin{itemize}
+  \item \hyperref[sec:delta-encoding]{Delta encoding}
+  \item \hyperref[sec:delta-of-delta]{Delta-of-delta encoding}
+  \item \hyperref[sec:run-length-encoding]{Run-length encoding}
+  \item \hyperref[sec:simple-8b]{Simple-8b}
+\end{itemize}
+
+~\cite{Compression:01}
+
+\subsection{Delta encoding}\label{sec:delta-encoding}
+
+Delta encoding stores only the difference between consecutive data points
+instead of the absolute values. This is especially efficient with datasets that
+are slowly changing over time, as the differences between consecutive values
+are often small and can be represented with fewer bits. This leads to
+significant storage savings and improved query performance. Time series data
+fulfills this requirement very well as values often change slowly over time.
+For example, temperature readings or stock prices often exhibit gradual changes
+rather than abrupt fluctuations.
+
+$\Delta_i = V_i - V_{i-1}$
+
+Our example of temperature readings measured likely exhibits small changes over
+time, making it an ideal candidate for delta encoding. Even more, the
+timestamps of the readings are also ideal for delta encoding, as they are often
+recorded at regular intervals (e.g., every second), resulting in a constant
+delta of 1 second between consecutive timestamps.
+
+To illustrate the benefits of delta encoding, let's look at the original data
+and the delta encoded data for our temperature readings.
+
+Note: The temperature values are multiplied by 10 to convert them to integers
+for better compression, as explained in Section~\ref{sec:float-compression}.
+\begin{verbatim}
+  Original data: [225, 225, 218, 220, 223]
+  Delta encoded: [225, 0, -7, 2, 3]
+\end{verbatim}
+
+As seen in the example above, the delta encoded data contains smaller numbers
+that can be stored with fewer bits, leading to reduced storage requirements.
+Also, if the values don't change much, many zeros will appear in the delta
+encoded data, which can be further compressed using techniques like run-length
+encoding (see Section~\ref{sec:run-length-encoding}).
+
+The effectiveness of this encoding is even more pronounced when compressing one
+of the core components of time-series databases: the timestamps. To make use of
+that, we store the timestamps as Unix timestamps (number of seconds since
+January 1, 1970) and apply delta encoding to them. This way, we can efficiently
+store the regular intervals between readings, which often results in a constant
+delta (e.g., 1 second), allowing for very efficient compression.
+
+\begin{verbatim}
+Original timestamps:
+[1672531200, 1672531260, 1672531320, 1672531380, 1672531440]
+
+Delta encoded timestamps: [1672531200, 60, 60, 60, 60]
+\end{verbatim}
+
+This approach significantly lowers the numbers. But to benefit from that, we
+also need to store these smaller numbers more efficiently, for example using
+Simple-8b (see Section~\ref{sec:simple-8b}).
+
+\subsection{Delta-of-delta encoding}\label{sec:delta-of-delta}
+
+Instead of just storing the difference between consecutive data points,
+delta-of-delta encoding stores the difference between consecutive deltas. This
+method is particularly effective for time series data that exhibits consistent
+trends or patterns over time, as it captures the rate of change more
+accurately.
+
+$\Delta\Delta_i = \Delta_i - \Delta_{i-1}$
+
+Our timestamps are ideal for delta-of-delta encoding as they often have a
+constant delta (e.g., 1 second). This means that the delta of the deltas will
+be zero, which can be efficiently compressed using techniques like run-length
+encoding (see Section~\ref{sec:run-length-encoding}).
+
+\begin{verbatim}
+Original timestamps:
+[1672531200, 1672531260, 1672531320, 1672531380, 1672531440]
+
+Delta encoded timestamps: [1672531200, 60, 60, 60, 60]
+
+Delta-of-delta encoded timestamps: [1672531200, 60, 0, 0, 0]
+\end{verbatim}
+
+Because the change of the numbers is very consistent in this example, the
+delta-of-delta encoded data contains even more zeros and low numbers than the
+delta encoded data, leading to even better compression ratios when combined
+with other compression techniques.
+
+\subsection{Simple-8b}\label{sec:simple-8b}
+
+Delta encoding helps reduce the size of the numbers. However, if we want to
+benefit from that, we also need a way to store these smaller numbers more
+efficiently. Without any further techniques, each number would still take the
+same amount of space as before (e.g., 64 bits for a standard integer on a
+64-bit architecture).
+
+Simple-8b is a lossless integer compression algorithm that stores data as a
+series of fixed-size blocks. Each block starts with the size of its contained
+units, the so-called `selector', followed by the packed integers.
+
+\textbf{Simplified example with a block size of 6 digits:}
+
+\begin{verbatim}
+Original timestamps:
+[1672531200, 1672531260, 1672531320, 1672531380, 1672531440]
+Delta encoded timestamps: [1672531200, 60, 60, 60, 60]
+
+Delta-of-delta encoded timestamps: [1672531200, 60, 0, 0, 0]
+
+Simple-8b character-based encoded: 
+{10: [1672531200], 2: [60, 60, 60, 60], 0: [0, 0, 0]}
+\end{verbatim}
+
+\begin{tcolorbox}[
+    colback=red!5!white, % Background color (light red)
+    colframe=red!75!black, % Frame color (dark red)
+    title=\textbf{Important Simplification Note}, % Title in the box header
+    fonttitle=\bfseries\sffamily, % Font style for the title
+    boxsep=5pt, % Space between the box and surrounding text
+    arc=4pt, % Rounded corners
+    boxrule=0.5pt % Thickness of the frame
+  ]
+  The simplified example provided uses decimal digits and an abstract block structure for demonstrative purposes. Please remember that the actual Simple-8b algorithm operates on fixed 64-bit words, where a 4-bit selector and 60 bits of payload are used to pack the resulting \textbf{binary} integers efficiently.
+\end{tcolorbox}
+
+\subsection{How the compression algorithm works in detail}
+
+Simple-8b determines the maximum of the integers in the block. Then it chooses
+the lowest encoding scheme for the block from the table below that can fit the
+maximum integer. The selector value is stored at the beginning of the block,
+followed by the packed integers.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{Encoding mode for Simple-8 scheme. Between 1 and 240 integers are coded with one 64-bit word.}
+  \resizebox{\textwidth}{!}{
+    \begin{tabular}{lcccccccccccccccc}
+      \textbf{selector value}   & 0   & 1   & 2  & 3  & 4  & 5  & 6  & 7  & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\
+      \midrule
+      \textbf{integers coded}   & 240 & 120 & 60 & 30 & 20 & 15 & 12 & 10 & 8 & 7 & 6  & 5  & 4  & 3  & 2  & 1  \\
+      \midrule
+      \textbf{bits per integer} & 0   & 1   & 2  & 3  & 4  & 5  & 6  & 7  & 8 & 9 & 10 & 12 & 15 & 20 & 30 & 60 \\
+    \end{tabular}}
+\end{table}
+
+If for example the maximum integer in a block is 17, the encoding scheme with
+selector value 5 would be chosen, as it can store integers up to 5 bits (which
+is enough for 17) and allows storing 15 integers in one block.
+
+\textbf{How to deal with negative numbers?}
+
+Simple-8b only supports non-negative integers. Delta-encoding on the other hand
+also outputs negative numbers. To deal with that, a common approach is ZigZag
+encoding. ZigZag encoding maps signed integers to unsigned by multiplying
+positive numbers by 2 and negative numbers by -2 and then subtracting 1. This
+way, small negative numbers are mapped to small unsigned integers, which can be
+efficiently encoded using Simple-8b.
+
+Formula for ZigZag encoding (decimal):
+
+\begin{itemize}
+  \item Positive numbers ($n \geq 0$): $ZigZag(n) = 2n$
+  \item Negative numbers ($n < 0$): $ZigZag(n) = -2n - 1$
+\end{itemize}
+
+or, more importantly, the other way round (decoding):
+
+\begin{itemize}
+  \item Even numbers ($n \% 2 == 0$): $ZigZag^{-1}(n) = n / 2$
+  \item Odd numbers ($n \% 2 != 0$): $ZigZag^{-1}(n) = -(n + 1) / 2$
+\end{itemize}
+
+Note: Encoding and decoding is usually done in binary using bitwise operations
+for performance reasons.
+
+\textbf{simplified, decimal example of Simple-8b with ZigZag encoding:}
+
+\begin{verbatim}
+  Delta encoded: [120, 3, 0, 0, 0, -3, 0, 0, 0]
+  ZigZag encoded: [240, 6, 0, 0, 0, 5, 0, 0, 0]
+  Simple-8b: {8: [240, 6, 0, 0, 0, 5], 0: [0, 0, 0]}
+\end{verbatim}
+
+~\cite{ZigZag:01}
+
+\section{Run-length encoding}\label{sec:run-length-encoding}
+
+The previous example had a lot of repeating values (mostly zeros) after delta
+encoding. To make use of that, run-length encoding can be applied.
+
+Run-length encoding is a simple, lossless data compression technique that
+replaces consecutive repeating values with a single value and its count of how
+often it repeats.
+
+\textbf{Timestamp Example of run-length encoding}
+\begin{verbatim}
+Original timestamps:
+[1672531200, 1672531260, 1672531320, 1672531380, 1672531440]
+Delta encoded timestamps: [1672531200, 60, 60, 60, 60]
+Delta-of-delta encoded timestamps: [1672531200, 60, 0, 0, 0]
+Run-length encoded timestamps: [1672531200, 60, (0, 3)]
+\end{verbatim}
+
+In the example above, the three consecutive zeros in the delta-of-delta encoded
+timestamps are replaced with a single zero and a count of 3, indicating that
+the value 0 repeats three times. This practically removes the timestamps from
+our example. Of course, in real-world scenarios, the data might not be as
+perfectly regular, but run-length encoding can still provide significant
+compression benefits when there are sequences of repeating values. To calculate
+the complete storage cost for one million records, we just drop the timestamps
+completely as they don't take up any significant space after run-length
+encoding and we only need to store the first timestamp, the delta (60) and the
+count of zeros (3) for each block of timestamps.
+
+The encoding of the temperature readings is a bit more complex, as they don't
+have as many repeating values. However, if we assume that the temperature
+readings change slowly over time, we can still apply run-length encoding to the
+delta-encoded temperature values. For example, if we have a sequence of
+delta-encoded temperature values like [0, 0, -7, 2, 3], we can apply run-length
+encoding to get [(0, 2), -7, 2, 3], which indicates that the value 0 repeats
+twice. For our scenario, we assume 40\% of the delta-encoded temperature values
+are zeros, which can be efficiently compressed using run-length encoding.
+
+Our new storage cost for one million records would be:
+\begin{verbatim}
+  Timestamps: ~0 MB
+    first_ts + delta=60 + count=999,999 ~ 13 bytes total;
+    delta-of-delta collapses all remaining values to zero,
+    which RLE then stores as a single run.
+
+  Temperatures: ~0.6 MB
+    - 400,000 zero deltas: Simple-8b selector 0 packs
+      240 zeros per 64-bit word
+      -> 400,000 / 240 * 8 B ~ 13,333 B ~ 0 MB
+    - 600,000 non-zero deltas: ZigZag-encoded small integers
+      (~1 byte each) -> 600,000 B ~ 0.6 MB
+
+  Ids: ~0 MB
+    sequential IDs -> delta-encoded to all 1s ->
+    RLE: (1, 999,999) ~ 5 bytes total
+
+  Total: ~0.6 MB  (vs 16 MB binary  -> ~27x smaller;
+                   vs 62 MB JSON    -> ~103x smaller)
+\end{verbatim}
+
+Note: This example is a simplified estimation to illustrate the potential
+compression benefits. Not all values will be perfectly regular, and the actual
+compression ratio will depend on the specific characteristics of the data.
+However, it demonstrates how run-length encoding can significantly reduce
+storage requirements when there are sequences of repeating values.
+
+\subsection{Float and double compression}\label{sec:float-compression}
+
+Float values challenge compression algorithms because they cannot be easily
+reduced to smaller integers like in delta encoding. For example, a temperature
+reading of 22.5 would be stored as a 32-bit float, and even if the value
+changes slightly to 22.6, it would still require 32 bits to store the new
+value. This is because the binary representation of floating-point numbers is
+not linear, and small changes in the value can lead to large changes in the
+binary representation.
+
+Example:
+
+\begin{verbatim}
+  Original value: 22.5
+  Binary representation (32-bit float): 0x41B40000
+
+  New value: 22.6
+  Binary representation (32-bit float): 0x41B66666
+\end{verbatim}
+
+The easiest and most effective way to compress float values is to convert them
+to integers by multiplying them with a fixed factor (e.g., 100 for two decimal
+places) before applying integer compression techniques. This way, the values
+can be efficiently compressed using methods like delta encoding and Simple-8b,
+while still preserving the necessary precision.
+
+$IntegerValue = FloatValue \times Factor$
+
+This approach is commonly used and recommended, but it comes with the cost of
+losing some precision if the factor is not chosen carefully. For example, if we
+choose a factor of 100, we can only preserve two decimal places. If the
+original value has more than two decimal places, we would lose that information
+during the conversion.\cite{FloatTypes:01}
+
+One way to address this issue is to use techniques like Gorilla or CHIMP
+compression. Both techniques use a combination of delta encoding and
+bit-packing to efficiently compress floating-point values without the need for
+converting them to integers. They achieve this by storing the differences
+between consecutive values and using variable-length encoding to represent
+these differences in a compact form.
+
+\subsubsection{Example of Gorilla/CHIMP compression for float values}
+
+Suppose the sensor boxes in our project report temperature readings every
+second. The first reading is 22.5, the second reading is 22.6, and the third
+reading is 22.7.
+
+First, the temperature readings are converted into their 32-bit IEEE~754 single
+precision floating-point binary representation:
+
+\begin{verbatim}
+22.5 = 01000001101101000000000000000000
+22.6 = 01000001101101001100110011001101
+22.7 = 01000001101101011001100110011010
+\end{verbatim}
+
+The first value, $V_1$, is always stored completely uncompressed, occupying the
+full 32 bits.
+
+The second value, $V_2$, is compared to $V_1$ to calculate the XOR difference:
+\[
+  D_2 = V_1 \oplus V_2 = 00000000000000001100110011001101
+\]
+
+The third value, $V_3$, is compared to $V_2$ to calculate the XOR difference:
+\[
+  D_3 = V_2 \oplus V_3 = 00000000000000000000000000000111
+\]
+
+The XOR differences $D_2$ and $D_3$ have many leading zeros. To efficiently
+store these differences, we can use a variable-length encoding scheme that only
+stores the non-zero bits along with metadata about how many leading zeros there
+are.
+
+\subsubsection*{Gorilla encoding of XOR differences}
+
+Gorilla compression, introduced by Facebook for their in-memory time-series
+database\\\cite{Gorilla:01}, uses the following scheme for each XOR difference
+$D_i$:
+
+\begin{enumerate}
+  \item If $D_i = 0$ (the value is identical to the previous one), store a single
+        \texttt{0} bit.
+  \item Otherwise, store a \texttt{1} bit, then choose one of two sub-cases:
+        \begin{itemize}
+          \item \textbf{Case A (\texttt{10}\ldots):} If the block of meaningful (non-zero) bits in $D_i$ fits entirely within the meaningful-bit window established by $D_{i-1}$ (i.e.\ at least as many leading zeros and at least as many trailing zeros), store \texttt{10} followed by only the meaningful bits reused from the previous window.
+          \item \textbf{Case B (\texttt{11}\ldots):} Otherwise, store \texttt{11} followed by 5~bits encoding the number of leading zeros, 6~bits encoding the length of the meaningful block, and finally the meaningful bits themselves.
+        \end{itemize}
+\end{enumerate}
+
+Applying this to the example:
+
+\textbf{Encoding $D_2$} (first difference, no previous window):
+\begin{itemize}
+  \item $D_2 \neq 0$, so a leading \texttt{1} is stored.
+  \item No previous window exists, so Case~B applies: \texttt{11} $+$ 5~bits for
+        leading zeros ($16 = \texttt{10000}$) $+$ 6~bits for block length ($16 =
+          \texttt{010000}$) $+$ 16 meaningful bits.
+  \item Total bits used: $2 + 5 + 6 + 16 = \mathbf{29}$ bits (vs.\ 32 uncompressed).
+\end{itemize}
+
+\textbf{Encoding $D_3$}:
+\begin{itemize}
+  \item $D_3 \neq 0$, so a leading \texttt{1} is stored.
+  \item $D_3$ has 29 leading zeros and 3 meaningful bits. The previous window starts at bit~16 and spans 16 bits. Since $29 \geq 16$ (more leading zeros) and $0 \geq 0$ (same trailing zeros), the meaningful bits of $D_3$ fit inside the previous window. Case~A applies.
+  \item Store \texttt{10} followed by the 16 bits of the previous window (which now
+        contains \\\texttt{0000000000000111}).
+  \item Total bits used: $2 + 16 = \mathbf{18}$ bits (vs.\ 32 uncompressed).
+\end{itemize}
+
+Altogether, the three temperature values are stored in $32 + 29 + 18 = 79$ bits
+instead of $3 \times 32 = 96$ bits --- a reduction of roughly 18\,\%. The
+savings grow substantially with longer sequences of slowly changing sensor
+values, since many differences will be small (Case~A or even zero) and the
+29-bit Case~B header is only paid once when the meaningful-bit window needs to
+widen.
+
+\subsubsection{CHIMP\@: an improvement over Gorilla}
+
+CHIMP (Changing datapoints compression) is a later refinement that addresses
+two shortcomings of Gorilla:
+
+\begin{itemize}
+  \item \textbf{Trailing-zero awareness:} Instead of anchoring the reuse window only by leading zeros, CHIMP also tracks trailing zeros so that the stored payload is always exactly the minimal set of meaningful bits, without padding.
+  \item \textbf{Reference-set reuse:} Rather than comparing each value only with its immediate predecessor, CHIMP maintains a small set of recently seen values and picks the one that produces the smallest XOR, often yielding fewer meaningful bits than a nearest-neighbour comparison.
+\end{itemize}
+
+As a result, CHIMP achieves compression ratios that are on average 50\,\%
+better than Gorilla on real-world floating-point time-series workloads, while
+remaining similarly lightweight to compute.~\cite{Liakos:01}
+
+\section{Optimization Techniques for Time-Series Analytics}
+
+\subsection{precomputed aggregates}
+
+Statistics are often accessed frequently, and each fetch should be fast and
+shouldn't be out of date. To avoid having to rescan every row every time, we
+can precompute aggregates and store them in a separate table. To put it
+simplely, precomputed aggregates are a way to store the results of expensive
+computations (like averages, sums, counts) in a separate table so that they can
+be quickly retrieved without having to recalculate them every time. Doing this
+manually comes with the cost of redundancy. However, some databases like
+TimescaleDB have built-in support for precomputed aggregates, which can
+automatically manage the storage and updating of these aggregates without the
+need for manual intervention.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=1\textwidth]{images/cloudflare-benchmark-precomputed-aggregations.png}
+  \caption{Performance efficiency gained through pre-computed aggregations.}~\label{fig:precomputed_aggregations}
+\end{figure}
+
+\subsection{TimescaleDB's implementation of precomputed aggregates}
+
+TimescaleDB implements precomputed aggregations through a feature called
+\textit{continuous aggregates}, which are specialized materialized views backed
+by its hypertable infrastructure \cite{TimescaleDB:09}. Unlike plain PostgreSQL
+materialized views, which must be refreshed manually and in full, continuous
+aggregates are refreshed automatically and \textit{incrementally}: only the
+time buckets that have received new data since the last refresh are recomputed,
+leaving older, already-materialized buckets untouched. This design makes the
+refresh overhead proportional to the volume of \emph{recent} writes rather than
+the total dataset size.\cite{TimescaleDB:05}
+
+The central concept is the \textit{completion threshold}, illustrated in
+\autoref{fig:continuous-aggregates}. Data older than this threshold is
+considered stable and its aggregate representation is kept in the materialized
+table. Data that has arrived after the threshold --- the most recent raw
+records --- has not yet been rolled up and therefore lives only in the raw
+hypertable chunks. When a query is issued, TimescaleDB's \textit{real-time
+  aggregation} engine transparently merges both parts: it reads the precomputed
+rows from the materialized table for the historical portion and performs an
+on-the-fly aggregation over the small, unprocessed tail of raw data. The result
+is presented to the caller as a single, consistent view with no staleness for
+any time range.\cite{TimescaleDB:05}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=1\textwidth]{images/tigerdata-continuous-aggregate.png}
+  \caption{TimescaleDB's implementation of continuous aggregations\cite{TimescaleDB:09}}\label{fig:continuous-aggregates}
+\end{figure}
+
+A continuous aggregate is defined with a standard SQL \texttt{CREATE
+  MATERIALIZED VIEW} statement extended with the \texttt{timescaledb.continuous}
+option and grouping (\texttt{time\_bucket}).\\\cite{TimescaleDB:06} For example,
+the following view pre-aggregates per-hour device-status counts from a raw
+hypertable:
+
+\begin{lstlisting}[language=PGTSSQL, caption=Defining a continuous aggregate in TimescaleDB]
+CREATE MATERIALIZED VIEW device_state_by_status_1h
+WITH (timescaledb.continuous) AS
+SELECT
+  time_bucket(INTERVAL '1 hour', timestamp) AS time_bucket,
+  account_id,
+  status,
+  COUNT(*) AS total
+FROM device_state
+GROUP BY 1, 2, 3
+WITH NO DATA;
+
+-- Enable real-time aggregates so the most recent raw data
+-- is always included automatically
+ALTER MATERIALIZED VIEW device_state_by_status_1h
+  SET (timescaledb.materialized_only = FALSE);
+
+-- Schedule incremental refreshes every 10 minutes
+SELECT add_continuous_aggregate_policy(
+  'device_state_by_status_1h',
+  start_offset  => INTERVAL '10 hours',
+  end_offset    => INTERVAL '1 minute',
+  schedule_interval => INTERVAL '10 minutes'
+);
+\end{lstlisting}
+
+\subsection{Real-world story: Cloudflare}
+
+Engineers at Cloudflare reported that switching from manually scheduled
+PostgreSQL cron jobs to TimescaleDB continuous aggregates across six
+pre-aggregate tables reduced query times by up to \textbf{1000x} for customers
+with 30{,}000+ devices, turning multi-second dashboard loads into near-instant
+responses even for 7-day time windows.\\\cite{TimescaleDB:05} The same
+mechanism removes the need for any external orchestration: schema changes,
+refresh intervals, and data-retention policies are all managed inside the
+database, eliminating a whole tier of infrastructure.\cite{TimescaleDB:05}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{images/cloudflare-benchmark.png}
+  \caption{Cloudflare benchmark results: query time improvement after migrating to TimescaleDB continuous aggregates\cite{TimescaleDB:05}}\label{fig:cloudflare-benchmark}
+\end{figure}
+
+Beyond serving dashboard visualizations, continuous aggregates compose
+fluidly with \\ TimescaleDB's other analytical functions.~\cite{TimescaleDB:06}
+The materialized view can itself be the source of a further
+\texttt{time\_bucket} grouping, enabling hierarchical rollups (hourly $\to$
+daily $\to$ monthly) with each level refreshing only the delta introduced by
+the level below it. Built-in hyperfunctions such as
+\texttt{time\_bucket\_gapfill}, \texttt{first}/\texttt{last}, and
+approximate-percentile aggregates operate directly on continuous aggregate
+views, providing a rich analytical toolkit without sacrificing the
+query-latency benefits of precomputation.\cite{TimescaleDB:06}
+
+\section{Indexing}
+
+When querying for specific data, the database has to search through all data
+until it finds the requested data. That is especially slow because the data is
+mostly not sorted in a useful way. Also when aggregating data over a long time
+period, the database has to read all data even if only a small subset is
+relevant.
+
+Creating indexes for specific columns addresses this problem by storing a
+sorted and optimized representation of the data for fast searching. Indexes can
+be created for specific columns that are often queried, allowing the database
+to quickly locate the relevant data without scanning the entire dataset.
+
+\textbf{Why not create indexes for all columns?} Creating indexes drastically improves read performance. However, with this improvement comes the cost of additional storage space as the indexes store redundant information. Furthermore, indexes introduce overhead during write operations since the indexes need to be updated whenever data is inserted, updated, or deleted. This can lead to slower write performance, especially in scenarios with frequent data modifications.
+
+\section{Partitioning}
+
+Data partitioning is a technique used to divide a large dataset into smaller
+pieces called \textit{partitions}. Each partition contains only a subset of the
+overall dataset, but together they still form one logical
+database.\cite{TigerData:01}
+
+The main idea is simple: if a query only needs a fraction of the data, the
+database should be able to touch only the relevant partitions, instead of
+scanning everything. Partitioning can also make operational tasks easier, since
+maintenance work such as backups or moving data can be done partition by
+partition rather than on one monolithic table.\cite{TigerData:01}
+
+Continuing our temperature-sensor example from the beginning of the chapter,
+most reads will be time-bounded (``last 10 minutes'', ``today'', ``this
+month''). If we store all measurements in a single huge structure (one table or
+one ever-growing file), even a simple query like \texttt{AVG (temperature)
+  WHERE timestamp in [t\_0, t\_1]} tends to push the system to process far more
+data than necessary. In practice, this means more CPU work and more I/O
+pressure, because the system must sift through a large volume of records to
+find the relatively small slice that matches the time filter.
+
+Partitioning addresses exactly this by physically splitting the dataset so that
+queries can focus on the partitions that may contain relevant records.
+TigerData describes this as a performance benefit of partitioning because
+dividing a large database into smaller partitions reduces the amount of data
+that needs to be processed and can reduce contention for shared resources such
+as CPU and I/O.\cite{TigerData:01}
+
+In our simplified database, this could be implemented as multiple files; in a
+relational database, it commonly maps to multiple partition tables that still
+behave like one logical table.\cite{TigerData:01}
+
+\textbf{Example: partitioning the sensor data by time window}
+\begin{verbatim}
+measurements_2026_01  (all rows for January)
+measurements_2026_02  (all rows for February)
+...
+
+Query: average temperature on 2026-02-10
+-> only measurements_2026_02 must be considered
+\end{verbatim}
+
+TigerData summarizes the main motivations for partitioning as:
+\begin{itemize}
+  \item \textbf{Improved performance:} smaller partitions reduce the amount of data that must be processed and can lower contention for shared resources such as CPU and I/O.\cite{TigerData:01}
+  \item \textbf{Scalability:} partitions make it easier to scale storage and compute as the dataset grows.\cite{TigerData:01}
+  \item \textbf{Manageability:} management tasks (e.g., maintenance and backups) can be simplified when operating on smaller partitions.\cite{TigerData:01}
+  \item \textbf{Availability (as a goal):} partitioning enables distributing and replicating data across systems, but availability still has to be designed for explicitly.\cite{TigerData:01}
+\end{itemize}
+
+\subsection{Horizontal, vertical, and hybrid partitioning}
+
+There are multiple ways to split data into partitions. The most common
+distinction is:
+
+\begin{itemize}
+  \item \textbf{Horizontal partitioning:} partitions contain complete rows, but fewer rows than the full table.
+  \item \textbf{Vertical partitioning:} partitions contain different subsets of columns (attributes). A shared key (often the primary key) is used to reconstruct a full row on reads.
+  \item \textbf{Hybrid partitioning:} combines both horizontal and vertical partitioning.
+\end{itemize}
+
+\noindent\cite{TigerData:01}
+
+For time-series workloads, horizontal partitioning is typically the most
+important: time naturally defines ranges (time windows), and most analytical
+queries already filter by time. By using horizontal partitioning based on time,
+the database can quickly skip irrelevant partitions and focus on the relevant
+time windows, which is a huge performance boost for time-series
+queries.\cite{TigerData:01}

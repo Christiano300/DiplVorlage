@@ -1,0 +1,116 @@
+\chapter{Introduction}\label{chap:overview-introduction}
+
+AirScout combines several technical disciplines into a single system: sensor
+data acquisition, preprocessing, time-series storage, spatial visualization, 3D
+geodata rendering, and mobile access. This thesis provides an overview of those
+areas and documents the central design decisions, challenges, and
+implementation approaches that shaped the project.
+
+% The foundation of the project is the reliable collection and preparation of sensor data. Luca Reisenbichler's thesis, beginning in Chapter~\ref{chap:luca-introduction}, examines how sensors work, how measurements are collected, and how raw data can be prepared for reuse. In particular, the chapters on data sources (Chapter~\ref{title:data-sources}) and data processing (Chapter~\ref{title:processing}) discuss methods for dealing with sensor noise, missing values, and outliers.
+
+% Once the data has been cleaned, it must be stored and queried efficiently over long periods of time. Benjamin Friedl's thesis, starting in Chapter~\ref{chap:benjamin-introduction}, focuses on time-series databases, performance optimization techniques, benchmarking, and the evaluation of database systems for the AirScout use case.
+
+% To make large collections of measurements understandable, the data also has to be visualized in a meaningful way. Christian Patzl's thesis, beginning in Chapter~\ref{chap:christian-introduction}, covers the theoretical foundations and implementation of the spatial visualization used in AirScout. The resulting map makes sensor values visible across space and time and allows users to inspect individual sensor locations in detail.
+
+% To complement the map view, Tobias Eisinger's thesis, starting in Chapter~\ref{chap:tobias-introduction}, investigates the mathematical and technical foundations required for a 3D representation of sensor locations. This part of the project makes it possible to explore geographic context more intuitively and to better understand the physical placement of individual sensors.
+
+% Finally, Valentin Hacker's thesis, beginning in Chapter~\ref{chap:why_needed}, addresses mobile access to the AirScout platform. Its focus is on the evaluation of cross-platform mobile frameworks and on the implementation of a mobile application that enables users to access measurement data and manage their AirScout devices conveniently.
+
+% Objectives
+
+\section{Objective --- Reisenbichler Luca}
+The objective of this diploma thesis is to investigate intelligent sensor data
+acquisition and methods for data preparation for reuse. This diploma targets
+methods on how to deal with common troubles that come from working with Sensor
+Data, especially how to detect and deal with Sensor Noise, missing values, and
+outliers. Furthermore, this diploma thesis also covers the topic of how to
+optimally use sensors in production.
+
+Also contained in this work are the working principle of data collection of
+sensor data, practical technical implementations and use cases in the real
+world.
+
+Insights of this diploma thesis will be used in the project ``AirScout'', as
+far as technical limitations allow it. Usages include understanding how
+concrete sensors work, as well as defining measures needed to handle incoming
+data. This includes:
+\begin{itemize}
+    \item Outlier Detection and handling
+    \item Assessing whether or not measures are needed or not
+    \item Implementing resource-saving algorithms for handling data
+\end{itemize}
+
+\section{Objective --- Benjamin Friedl}
+
+The objective of this diploma thesis is to investigate time-series databases,
+their underlying concepts, and the techniques they use to improve performance
+for large volumes of time-dependent data. A particular focus is placed on the
+evaluation of relevant systems, performance characteristics such as ingestion
+rate, query latency, and compression, as well as benchmarking methodologies for
+comparing databases under realistic workloads.
+
+This work also covers practical aspects of integrating a time-series database
+into a real project, including the use of benchmarking tools, database
+selection, and the adaptation of project structures to take advantage of
+time-series-specific features.
+
+The knowledge obtained in this diploma thesis is being used in the ``AirScout''
+project, especially for the selection, evaluation, and optimization of the
+database layer for sensor data.
+
+\section{Objective --- Christian Patzl}
+
+The objective of this thesis is to define requirements for and implement, a
+map-based visualization method that represents sensor measurements as a value
+distribution overlay. In contrast to conventional heat maps, the proposed map
+should visualize two properties: (1) data-point density through opacity and (2)
+the measured value through different colors. To achieve this, spatiotemporal
+smoothing/interpolation methods are explained and evaluated with respect to
+visual quality, performance, and practical applicability in a browser-based
+system. A key goal is to provide an automated and performant solution that
+works reliably on mobile and low-end devices.
+
+To achieve this, the thesis also covers the selection of a suitable mapping
+approach and the implementation of a WebGL-based map overlay that implements
+the proposed visualization method.
+\section{Objective --- Eisinger Tobias}
+
+The objective of this diploma thesis is to investigate and evaluate several
+popular web frameworks with regard to their efficiency and performance, as well
+as methods for preparing geographic data to be used in a 3D computer
+environment. Additionally, this thesis examines the mathematical foundation for
+3D computer graphics, with a focus on coordinate spaces, matrix operations, and
+linear transformations.
+
+This work also contains performance benchmarks in which the frameworks are
+tested in unoptimized scenarios. Furthermore, the complexity of development
+within these frameworks will be tested with practical implementation examples.
+
+The knowledge obtained in this diploma thesis will be used in the development
+of the ``AirScout'' project. % konkreterer Projekbezug/Nutzung
+
+\section{Objective --- Valentin Hacker}
+
+The objective of this diploma thesis is to investigate and evaluate modern
+cross-platform mobile application development frameworks with regard to their
+suitability for building a mobile companion app for the AirScout platform. The
+evaluation covers multiple dimensions, including developer experience, runtime
+performance, framework maturity and ecosystem health, as well as security
+characteristics.
+
+This work provides an in-depth introduction to the architectures and rendering
+pipelines of the selected frameworks---React Native, Ionic, NativeScript,
+Flutter, .NET MAUI, Tauri, and Kotlin Multiplatform (Compose
+Multiplatform)---and compares them against purely native development as a
+baseline.
+
+Based on the comparative analysis, the thesis documents the selection of Kotlin
+Multiplatform with Compose Multiplatform for the AirScout mobile application
+and presents the resulting implementation, including its navigation
+architecture, map integration via WebView embedding, and the use of the
+\texttt{expect}/\texttt{actual} mechanism for platform-specific functionality.
+
+The knowledge obtained in this diploma thesis will be used in the development
+of the ``AirScout'' project, specifically for the mobile application that
+enables users to access measurement data, visualize sensor readings on a map,
+and manage their AirScout devices from Android and iOS.

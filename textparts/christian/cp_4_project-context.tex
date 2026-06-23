@@ -1,0 +1,12 @@
+\chapter{Usage of the Value Distribution Map in AirScout}
+
+The map described in \autoref{ch:implementation} was intended to be used as part of the AirScout project to visualize the collected air-quality data. Unfortunately, performance testing showed that large numbers of data points (around 40,000) reduced performance to unusable levels, especially on low-end devices. Because of this, the map will instead be rendered on the backend using Java and cached so that it can be rendered once and used by all clients without performance issues.
+
+Despite this, this thesis is still relevant to the project. The theory and mathematics behind the map are still valid, and the Java implementation is based directly on the WebGL implementation. All the math from \autoref{subsec:shader_details} is still used in the Java implementation, and the resulting images look the same.
+
+The final implementation of the map can be seen in \autoref{fig:final_map}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/final_map.jpg}
+    \caption{The final implementation of the map, rendered on the backend using Java.}\label{fig:final_map}
+\end{figure}

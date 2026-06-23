@@ -1,0 +1,338 @@
+\chapter{Benchmarking of Time-Series Databases}\label{sec:benchmarking}
+
+Every project must choose a technology stack. This choice should be driven by
+the project's requirements and objective criteria; therefore, benchmarking is a
+crucial part of the decision process. This chapter presents the benchmarking
+procedure for time-series databases and the results obtained for the AirScout
+project.
+
+\section{Benchmarking techniques}
+
+Benchmarks such as ClickBench, TPC-H, and TPC-DS measure analytical database
+performance, but they do not accurately represent real-time
+analytics~\cite{Benchmarking:03}. They often focus on batch processing and do
+not capture the unique characteristics of time-series data, such as high write
+throughput and efficient querying of recent data. The solution is to use
+benchmarks specifically designed for time-series databases, such as TSBS (Time
+Series Benchmark Suite)~\cite{TSBS:01} and InfluxDB's own benchmarking tools.
+These benchmarks simulate real-world workloads, including high write rates and
+complex queries on recent data~\cite{QuestDB:01}.
+
+\section{Benchmark via TSBS for AirScout}
+
+The AirScout project uses the TSBS benchmark to evaluate the performance of the
+databases MongoDB, InfluxDB, and TimescaleDB\@. TSBS is a comprehensive
+benchmarking tool that simulates real-world time-series workloads, making it an
+ideal choice for our project. It allows us to generate synthetic datasets and
+execute a variety of queries to measure both read and write performance across
+the different databases.
+
+To keep the comparison as fair as possible, we used the same benchmark period,
+scale factor, and random seed for all systems. However, TSBS still requires
+database-specific output formats and loaders, so the effective number of loaded
+metrics is not guaranteed to be bit-for-bit identical across databases. The
+results should therefore be interpreted as a controlled comparison under the
+same workload configuration, not as a byte-identical replay into three engines.
+
+All benchmarks run on my laptop, which has an AMD Ryzen™ AI 9 365 w/ Radeon™
+880M x 20, 32 GB RAM, and a 1 TB SSD\@.
+
+The benchmarking process involves the following steps:
+
+\begin{itemize}
+    \item \textbf{Data Generation:} TSBS pre-generates synthetic time-series datasets that mimic real-world workloads. Using a fixed random seed makes the process deterministic and reproducible across all tested databases.
+    \item \textbf{Query Generation:} Queries are also pre-generated before the benchmark run to ensure that on-the-fly generation does not affect the results. The same seed is used to guarantee identical queries across databases.
+    \item \textbf{Database Setup:} Each database is set up according to best practices, ensuring optimal performance for the benchmark.
+    \item \textbf{Data Loading:} The pre-generated dataset is inserted into each database while TSBS records write performance metrics such as ingestion throughput and latency.
+    \item \textbf{Query Execution:} The pre-generated queries are executed against the loaded data to measure read performance, including query latency and throughput.
+\end{itemize}
+~\cite{TSBS:01}
+
+\subsection{Data Generation}
+
+TSBS generates synthetic time-series data that simulates real-world workloads.
+The data includes multiple metrics, tags, and timestamps, creating a realistic
+environment for benchmarking. The tool offers several parameters to customize
+the data generation process, such as the number of metrics, tags, and the time
+range. For the AirScout project, we configured TSBS to generate a dataset that
+closely resembles the expected workload of our application, ensuring that the
+benchmark results are relevant and actionable.
+
+The following command is a template showing how the dataset was generated for
+benchmarking. The database placeholder must be replaced with the concrete
+target format:
+
+\begin{lstlisting}[language=bash, caption={Template command to generate synthetic time-series data using TSBS.}, label={lst:tsbs-data-generation}]
+/tsbs/tsbs_generate_data \
+    --use-case="iot" \
+    --seed=123 \
+    --scale=100 \
+    --timestamp-start="2024-01-01T00:00:00Z" \
+    --timestamp-end="2024-01-15T00:00:00Z" \
+    --log-interval="10s" \
+    --format="[timescaledb | influx | mongo]" | gzip > data/[db]-data.gz
+\end{lstlisting}
+
+Explanation of the command parameters:
+
+\begin{itemize}
+    \item \texttt{--use-case='iot'}: Specifies the use case for data generation, in this case, Internet of Things (IoT) data.
+    \item \texttt{--seed=123}: Sets a fixed random seed to ensure that the generated data is the same across different runs and databases.
+    \item \texttt{--scale=100}: Determines the scale of the dataset, which can be adjusted based on the expected workload.
+    \item \texttt{--timestamp-start} and \texttt{--timestamp-end}: Define the time range for the generated data, simulating a realistic time-series dataset.
+    \item \texttt{--log-interval='10s'}: Specifies the interval at which data points are generated, creating a consistent time-series pattern.
+    \item \texttt{--format='[timescaledb | influx | mongo]'}: Indicates the output format for the generated data, allowing for compatibility with different databases.
+\end{itemize}
+
+\subsection{Query Generation}
+
+Similar to data generation, TSBS also pre-generates queries before the
+benchmark run. This approach ensures that the query generation process does not
+interfere with the performance measurements. By using the same fixed random
+seed for query generation, we guarantee that the same set of queries is
+executed against each database, allowing for a fair comparison of read
+performance.
+
+The following command is likewise a template for query generation. The database
+placeholder must be replaced with the concrete target format:
+
+\begin{lstlisting}[language=bash, caption={Template command to generate queries using TSBS.}, label={lst:tsbs-query-generation}]
+./tsbs/tsbs_generate_queries \
+    --use-case="iot" \
+    --seed=123 \
+    --scale=100 \
+    --timestamp-start="2024-01-01T00:00:00Z" \
+    --timestamp-end="2024-01-15T00:00:00Z" \
+    --queries=1000 \
+    --query-type="airscout-crossing" \
+    --format="[timescaledb | influx | mongo]" | gzip > data/queries/[db]-queries.gz
+\end{lstlisting}
+
+Explanation of the command parameters:
+
+\begin{itemize}
+    \item \texttt{--use-case='iot'}: Specifies the use case for query generation, matching the data generation use case.
+    \item \texttt{--seed=123}: Sets the same fixed random seed as used in data generation to ensure that the same queries are generated for each database.
+    \item \texttt{--scale=100}: Matches the scale of the dataset to ensure that the queries are relevant to the generated data.
+    \item \texttt{--timestamp-start} and \texttt{--timestamp-end}: Define the time range for the queries, ensuring they target the same period as the generated data.
+    \item \texttt{--queries=1000}: Specifies the number of queries to generate, which can be adjusted based on testing needs.
+    \item \texttt{--query-type='airscout-crossing'}: Selects the custom query type implemented for the AirScout use case. This query type retrieves time-series measurements within the defined benchmark time window, closely matching the access patterns of the AirScout application.
+    \item \texttt{--format='[timescaledb | influx | mongo]'}: Ensures that the generated \\
+          queries are compatible with the respective databases being benchmarked.
+\end{itemize}
+
+\section{Database Setup}
+
+To simplify the setup process, we used Docker to create isolated environments
+for every database. This approach allows us to easily manage and configure the
+databases without affecting the host system.
+
+\section{Data Loading and Query Execution}
+
+After setting up the databases, we loaded the pre-generated dataset into each
+database while TSBS recorded write performance metrics such as ingestion
+throughput and latency. Once the data was loaded, we executed the pre-generated
+queries against the loaded data to measure read performance, including query
+latency and throughput.
+
+The following command is used to load the data into TimescaleDB\@:
+
+\begin{lstlisting}[language=bash, caption={Command to load data into TimescaleDB using TSBS.}, label={lst:tsbs-data-loading}]
+cat data/timescaledb-data.gz | gunzip | ./tsbs/tsbs_load_timescaledb \
+    --postgres="host=localhost user=postgres password=password sslmode=disable" \
+    --pass="password" --workers=4 --batch-size=10000
+\end{lstlisting}
+
+The output of the data loading process provides key performance metrics, such
+as ingestion throughput and total load time.
+
+\begin{lstlisting}[language=bash, caption={Output of the data loading process.}, label={lst:tsbs-data-loading-output}]
+loaded 174247712 metrics in 26.628sec with 4 workers
+(mean rate 6543739 metrics/sec)
+\end{lstlisting}
+
+Explanation of the loading command parameters:
+
+\begin{itemize}
+    \item \texttt{--postgres}: Specifies the connection string for the TimescaleDB instance, including host, user, password, and SSL mode.
+    \item \texttt{--pass}: Provides the password for authentication with the database.
+    \item \texttt{--workers=4}: Indicates the number of worker threads to use for loading data, which can improve performance by parallelizing the load process.
+    \item \texttt{--batch-size=10000}: Sets the number of records to insert in each batch, which can help optimize performance by reducing the number of individual insert operations.
+\end{itemize}
+
+The \texttt{cat} and \texttt{gunzip} commands are used to read the compressed
+data file and pipe it into the TSBS loading tool, allowing for efficient data
+loading without needing to decompress the entire file beforehand.
+
+\subsection{Data Loading Results}
+
+The following table summarizes the data loading results for each database:
+
+\begin{table}[ht!]
+    \centering
+    \begin{tabular}{|l|r|r|r|} % chktex 44
+        \hline % chktex 44
+        \textbf{Database} & \textbf{Metrics Loaded} & \textbf{Load Time (sec)} & \textbf{Mean Rate (metrics/sec)} \\
+        \hline % chktex 44
+        TimescaleDB       & 174,247,712             & 26.628                   & 6,543,739                        \\
+        InfluxDB          & 184,060,164             & 33.854                   & 5,436,870                        \\
+        MongoDB           & 173,268,014             & 28.812                   & 6,013,684                        \\
+        \hline % chktex 44
+    \end{tabular}
+    \caption{Data loading performance results for each database using TSBS.}\label{tab:tsbs-data-loading-results}
+\end{table}
+
+TimescaleDB achieved the highest ingestion rate at 6,543,739 metrics/sec,
+followed by MongoDB at 6,013,684 metrics/sec, while InfluxDB had the lowest
+throughput at 5,436,870 metrics/sec despite loading the most metrics overall.
+Because the total loaded metric counts differ slightly between the database-
+specific TSBS pipelines, these values should be read as indicative benchmark
+results under the same configuration rather than as a perfectly row-identical
+comparison.
+
+\begin{tcolorbox}[
+        colback=red!5!white, % Background color (light red)
+        colframe=red!75!black, % Frame color (dark red)
+        title=\textbf{Disclaimer}, % Title in the box header
+        fonttitle=\bfseries\sffamily, % Font style for the title
+        boxsep=5pt, % Space between the box and surrounding text
+        arc=4pt, % Rounded corners
+        boxrule=0.5pt % Thickness of the frame
+    ]
+    The benchmark tool TSBS is currently maintained by Timescale, but it was originally created by InfluxData\@.
+\end{tcolorbox}
+
+\subsection{Query Execution Results}
+
+The pre-generated queries are executed against each database using 4 parallel
+workers, measuring read performance and access distribution across all three
+systems.
+
+\subsubsection{TimescaleDB}
+
+\begin{lstlisting}[language=bash, caption={Command to execute queries against TimescaleDB using TSBS.}, label={lst:tsbs-query-timescaledb}, float]
+cat data/queries/timescaledb-queries.gz | gunzip | ./tsbs/tsbs_run_queries_timescaledb \
+    --postgres="host=localhost user=postgres password=password sslmode=disable" --workers=4
+\end{lstlisting}
+
+Result (1000 queries):
+
+\begin{lstlisting}[language=bash, caption={Query execution output for TimescaleDB.}, label={lst:tsbs-query-timescaledb-output}, float]
+Overall query rate: 14080 queries/sec
+Mean latency:    0.18 ms
+Max latency:    22.16 ms
+\end{lstlisting}
+
+\subsubsection{InfluxDB}
+
+\begin{lstlisting}[language=bash, caption={Command to execute queries against InfluxDB using TSBS.}, label={lst:tsbs-query-influxdb}]
+cat data/queries/influxdb-queries.gz | gunzip | ./tsbs/tsbs_run_queries_influx \
+    --urls="http://localhost:8086" --workers=4
+\end{lstlisting}
+
+Result (1000 queries):
+
+\begin{lstlisting}[language=bash, caption={Query execution output for InfluxDB.}, label={lst:tsbs-query-influxdb-output}]
+Overall query rate: 6795 queries/sec
+Mean latency:    0.57 ms
+Max latency:     7.48 ms
+\end{lstlisting}
+
+\subsubsection{MongoDB}
+
+\begin{lstlisting}[language=bash, caption={Command to execute queries against MongoDB using TSBS.}, label={lst:tsbs-query-mongodb}]
+cat data/queries/mongodb-queries.gz | gunzip | ./tsbs/tsbs_run_queries_mongo \
+    --url="mongodb://localhost:27017" --workers=4
+\end{lstlisting}
+
+Result (1000 queries):
+
+\begin{lstlisting}[language=bash, caption={Query execution output for MongoDB.}, label={lst:tsbs-query-mongodb-output}]
+Overall query rate: 3844 queries/sec
+Mean latency:    1.03 ms
+Max latency:     2.85 ms
+\end{lstlisting}
+
+\subsubsection{Summary}
+
+The following table summarizes the query execution results for all three
+databases:
+
+\begin{table}[ht!]
+    \centering
+    \begin{tabular}{|l|r|r|r|} % chktex 44
+        \hline % chktex 44
+        \textbf{Database} & \textbf{Query Rate (q/s)} & \textbf{Mean Latency (ms)} & \textbf{Max Latency (ms)} \\
+        \hline % chktex 44
+        TimescaleDB       & \textbf{14,080}           & \textbf{0.18}              & 22.16                     \\
+        InfluxDB          & 6,795                     & 0.57                       & 7.48                      \\
+        MongoDB           & 3,844                     & 1.03                       & \textbf{2.85}             \\
+        \hline % chktex 44
+    \end{tabular}
+    \caption{Query execution performance results for each database using TSBS (1000 queries, 4 workers). Best values per category are \textbf{bold}.}\label{tab:tsbs-query-results}
+\end{table}
+
+TimescaleDB delivered the highest query throughput at 14,080~queries/sec with a
+mean latency of only 0.18~ms, making it the clear leader in read performance.
+InfluxDB achieved 6,795~queries/sec at 0.57~ms mean latency, while MongoDB was
+slowest at 3,844~queries/sec with a mean latency of 1.03~ms. Notably, MongoDB
+exhibited the lowest maximum latency (2.85~ms), whereas TimescaleDB's maximum
+latency of 22.16~ms suggests occasional outlier queries under parallel load.
+
+The performance results indicate that TimescaleDB offers superior read and
+write performance for time-series workloads compared to InfluxDB and MongoDB\@.
+However, the choice of database should also consider other factors such as ease
+of use, scalability, and specific feature requirements beyond raw performance
+metrics.
+
+\subsubsection{Decision Matrix for AirScout}
+
+To make the final database choice transparent, we combined the benchmark
+results with project-specific criteria in a weighted decision matrix. The
+scores range from 1 (poor fit) to 5 (excellent fit). The weighting reflects the
+needs of AirScout, where query performance is especially important, but
+ingestion rate, storage efficiency, scalability, and overall cost/flexibility
+must also be considered. For TimescaleDB, InfluxDB, and MongoDB, the benchmark
+results directly inform the performance scores. Prometheus and OpenTSDB are not
+included in the benchmark and also not evaluated in the decision matrix because
+they are more specialized for monitoring workloads and do not align well with
+AirScout's broader requirements of a general-purpose time-series database that
+also supports data models like relational or document-based structures.
+
+\begin{table}[ht!]
+    \centering
+    \scriptsize
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{|l|c|c|c|c|} % chktex 44
+            \hline % chktex 44
+            \textbf{Criterion}      & \textbf{Weight} & \textbf{InfluxDB} & \textbf{TimescaleDB} & \textbf{MongoDB} \\
+            \hline % chktex 44
+            Ingestion performance   & 20\%            & 4                 & 5                    & 4                \\
+            \hline % chktex 44
+            Query performance       & 35\%            & 4                 & 5                    & 2                \\
+            \hline % chktex 44
+            Storage efficiency      & 15\%            & 5                 & 4                    & 3                \\
+            \hline % chktex 44
+            Scalability             & 15\%            & 4                 & 4                    & 4                \\
+            \hline % chktex 44
+            Costs \& flexibility    & 15\%            & 3                 & 5                    & 3                \\
+            \hline % chktex 44
+            \textbf{Weighted total} & \textbf{100\%}  & \textbf{4.00}     & \textbf{4.70}        & \textbf{3.00}    \\
+            \hline % chktex 44
+        \end{tabular}}
+    \caption{Weighted decision matrix for selecting a time-series database for AirScout. Scores are project-specific and use a scale from 1 (poor fit) to 5 (excellent fit).}\label{tab:airscout-decision-matrix}
+\end{table}
+
+The matrix confirms the interpretation of the raw benchmark results. InfluxDB\@
+scores strongly in storage efficiency and remains a capable specialized TSDB\@.
+MongoDB\@ benefits from schema flexibility but trails the specialized
+time-series systems in query performance. TimescaleDB\@ achieves the highest
+overall score because it offers the strongest measured read and write
+performance while also providing SQL, PostgreSQL integration, and a flexible
+path for future analytics.
+
+In the end, we chose TimescaleDB for AirScout due to its excellent performance
+in both data loading and query execution, as well as its seamless integration
+with PostgreSQL, the database we already knew and trusted, which allows us to
+leverage existing tools and expertise while benefiting from time-series
+optimizations.

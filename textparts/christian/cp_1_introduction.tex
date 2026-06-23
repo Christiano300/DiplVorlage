@@ -1,0 +1,110 @@
+\chapter{Introduction to Spatiotemporal Weighted Value Distribution Maps}\label{chap:christian-introduction}
+
+This chapter provides an overview of the desired result of this part of the thesis, including its requirements and terminology. It also examines existing solutions.
+
+\section{Overview of input data and desired result}
+
+For the purpose of visualizing the sensor data, one data type is relevant: a \emph{measurement}, which represents a single data point with the following information:
+\begin{itemize}
+    \item Time of measurement and upload to the servers
+    \item Geographical position in latitude and longitude
+    \item The user responsible for this measurement
+    \item Humidity
+    \item Temperature
+    \item Fine dust concentration for particles of 1$\mu m$, 2.5$\mu m$, and 10$\mu m$ in size
+    \item Air pressure
+\end{itemize}
+
+The goal is to create a map similar to a heat map, displaying an overlay
+derived from data points on a map.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{images/heatmap.jpg}
+    \caption{An example of a heatmap~\cite{heatmap:01}}\label{fig:Map_01}
+\end{figure}
+
+\autoref{fig:Map_01} shows a heat map of the frequency and location of
+Instagram photos tagged \#aokhalifax~\cite{heatmap:01}. Warmer colors represent
+a higher \emph{density} of data points, in this case Instagram posts.
+
+Instead of density, our map should display the \emph{associated value} of the data points and interpolate
+regions without data points.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.38]{images/valuedistributionmap.jpg}
+    \caption{A manually drawn example of the desired result, original map from OpenStreetMap~\cite{openstreetmap:01}}\label{fig:Map_02}
+\end{figure}
+
+\autoref{fig:Map_02} shows a hand-drawn depiction of the desired result. It
+shows an arbitrary quantity over St.\ Pölten, ranging from white to brown. The density of data points can only be discerned through the opacity of the overlay.
+
+The final requirements of the map are:
+\begin{itemize}
+    \item The opacity of the overlay corresponds to the \emph{density} of data points
+    \item The color of the overlay is an interpolation of the \emph{associated value}
+          from nearby data points.
+    \item It should be reasonably performant and preferably run on mobile and low-end devices.
+\end{itemize}
+
+\section{Terminology and Naming}
+
+An important task was finding terminology to describe a map with the above
+requirements. This is necessary to conduct research on the topic and establish
+a clear title for this thesis. According to ChatGPT~\cite{chatgpt:01}, the map
+that is similar to a heat map but displays value instead of density is called a
+\emph{spatiotemporal weighted value distribution map}. Upon further
+investigation, this was revealed to only be a description of the goals, made up
+of the following parts:
+\begin{itemize}
+    \item Spatiotemporal: location and time data are being processed
+    \item Weighted: data points can be weighted, adjusting for age and possibly clumping
+          of similar data for performance reasons
+    \item Value distribution: the map shows the distribution of a certain value, and not
+          density or counts
+    \item Map: the resulting visualization shows that value over space
+\end{itemize}
+
+ChatGPT also provided some formally recognized terms:
+\begin{itemize}
+    \item Spatiotemporal Kernel Regression: from a statistical standpoint
+    \item Spatiotemporal Interpolation: from a geographic standpoint
+\end{itemize}
+All of these fall under the umbrella term \emph{spatiotemporal interpolation methods}, or \emph{spatiotemporal smoothing methods}~\cite{mdpi:02}. This leads to the first part of the title of this thesis: \emph{Theory of Weighted Value Distribution Maps Including the Comparison of Spatiotemporal Smoothing Methods}, which is covered in \autoref{ch:theory}.
+
+In this thesis, it will simply be referred to as \emph{the map}.
+
+\section{Existing Solutions}
+
+\subsection{Surfer}
+Surfer is a program developed by Golden Software~\cite{surfer:01} for
+the visualization of geographic data. It offers ``numerous interpolation methods to
+grid regularly or irregularly spaced data onto a grid or raster''\cite{surfer:02}, such as kriging, IDP\footnote{Inverse Distance to a Power} in
+two or three dimensions. The different interpolation methods will be discussed
+later (see \autoref{sec:smoothingmethods}). In addition, Surfer supports a great
+number of tools for computational analysis, placing data on a map, and the
+analysis of three-dimensional data.
+
+Surfer fulfills the requirements of the map; however, it is paid software, and
+the goal is to have a dynamic map on a website, rendered in a browser, so it
+cannot be used. However, this thesis will use some of the interpolation methods
+mentioned in the Surfer specifications.
+
+\subsection{The gstat R package}
+\verb|gstat|~\cite{rgstat:paper1, rgstat:paper2} is an R package used for interpolation of geospatial data. It has support for both spatial and spatiotemporal modeling, making it a good choice for producing value distribution maps such as the one in this thesis.
+
+\verb|gstat| is provided with data that include location and time attributes. The package then estimates how values correlate across distance and time using a variogram model. Once that relationship is defined, \verb|gstat| performs Kriging (see~\autoref{subsec:kriging}) to predict values at unmeasured locations and times. The output is a continuous surface or series of surfaces that can be visualized as maps or animations. It works alongside data structures from multiple different packages, such as \verb|sp|\footnote{Spatial Data} and \verb|sf|\footnote{Simple features} for spatial vector data, or \verb|raster| and \verb|stars| for spatial raster data, allowing the final distribution to be used with standard R mapping workflows.\ \cite{r:spatialdata}
+
+\section{Comparison with the desired Result}
+
+All of the solutions mentioned above fail to meet at least one of the
+requirements. The main problem is the absence of automation (in software such as
+Surfer), which is necessary for the project. Additionally, the ability to
+display results on the client-side using JavaScript is not an option with
+existing solutions.
+
+Although using R for data processing is a potential option, it will not be
+considered in this thesis due to the specific goals of the project. The focus
+of this thesis is the development of a custom system that can meet the unique
+needs of the project.

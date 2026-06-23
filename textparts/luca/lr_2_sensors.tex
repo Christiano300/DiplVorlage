@@ -1,0 +1,77 @@
+\chapter{Sensors: Basic and classification}\label{chap:luca-introduction}
+This chapter introduces the fundamental concepts required to understand sensors and their roles in modern electronic systems. Sensors are essential components that allow devices to interact with the physical world by measuring environmental or mechanical quantities and converting them into electrical signals.
+
+\section{Definition and tasks of sensors}
+\begin{quote}
+    Sensors are building blocks or circuits that are designed to convert a non-electrical input signal to an electrical output signal.
+\end{quote}
+\noindent\cite{LRWeb:26}
+
+In other words, sensors can be seen as the eyes and ears of a device. They detect changes in the environment and interact with it. 
+
+\boldtitle{Building parts of a sensor}
+A sensor is usually made of one component for each stage of the data-measuring process. These stages are:
+
+\begin{itemize}
+    \item Sensing/Detection
+    \item Conversion
+    \item Signaling
+\end{itemize}
+
+\boldtitle{Detection Process}
+In this stage, the component directly interacts with the sensor's environment. It detects changes in the field that it is designed for. Thus it is not possible to commonly tell how this process happens for every sensor. Sensors are able to spot differences in the environment, for example humidity or temperature, but sensors can also identify orientational properties of their overlying device, for example acceleration or rotation.
+
+\boldtitle{Conversion Process}
+In the next stage the conversion component receives the response from the sensing component and continues by converting it into an electric signal. Although the signal can also be mechanical or optical, depending on the sensor. 
+
+\boldtitle{Signaling Process}
+The last stage is mainly for fine-tuning the whole signal. The signaling component uses the generated response of the previous component and interprets it in a way, so that it can be used for pre-processing and decision making. The pre-processing might include noise-filtering, smoothing or any other methods described in\ \autoref{title:processing}.
+
+\noindent\cite{LRWeb:59}
+
+\section{Classification}
+Sensors for different physical devices come in large sizes and different forms, thus it only makes sense to classify them into different categories. Sensors can be classified into two main criteria, power supply and operation mode.
+
+\boldtitle{Power supply}
+The two subcategories of the power supply are modulating/active and self-generating/\ passive, and they differ in how they obtain their power to work.
+
+Modulating sensors acquire their power from an external power supply, causing the output of the sensor to depend only on the input. An example of this type of sensor would be a gyroscope, since it constantly needs a force that moves the mass of the sensor.
+
+Self-generating sensors get all their power from the input, thus being the reason for the power of the output coming directly from the input. An example of a self-generating sensor would be a piezoelectric accelerometer.
+
+Modulating sensors typically need more wires than self-generating sensors, as different wires are required for the signals and the power supply. An advantage of modulating sensors is that the supply power can alter the sensitivity of the sensor.
+
+\boldtitle{Operation mode}
+Considering operation mode sensors can be categorized in deflection sensors and null-type sensors, the difference is the way that they handle movement.
+
+Deflection sensors measure how much something moves. An example for a deflection sensor would be a deflection accelerometer.
+
+Null-type sensors try to prevent movement. These sensors measure how much something moves, by adding a known opposing effect until there is no movement anymore. The sensor measures how much balancing was needed. A servo-accelerometer serves as an example here. 
+
+Typically the data obtained from a null sensor are more accurate, since the known balancing effect can be calibrated against a high-precision standard. Although they are more accurate, null measurements are slow and the response time will not be as short as the of deflection sensors.
+
+\noindent\cite{LRBook:01}
+
+
+\section{Measurement-principles}
+Sensors may differ from each other by the way operate. The six most common working principles are resistive, capacitive, voltage, photoelectric, thermoelectric and magnetic.
+
+\boldtitle{Resistive Sensor Principle}
+Resistive sensors capture their data by detecting change in resistance. These type of sensors usually include a sensitive component whose resistance value changes. Based on external influence, for example temperature or pressure.
+
+\boldtitle{Capacitive Sensor Principle}
+Capacitive sensors operate by measuring changes in capacitance. These sensors work by detecting changes in the dielectric constant between multiple conductive plates to detect changes. An example for a capacitive sensor would be a typical MEMS accelerometer~\ref{title:accelerometer}.
+
+\boldtitle{Voltage Sensor Principle}
+Voltage sensors work by capturing changes from external voltage signals. One type of this sensor is the differential voltage sensor, it works by measuring variations in the input voltage difference.
+
+\boldtitle{Photoelectric Sensor Principle}
+Photoelectric sensors work by reacting to changes in light reflection, transmission or absorption in order to recognize the presence of an object. The operating principle is based on optics including the photoelectric effect and the reflection effect. Whether or not an object reflects the light beam that is emitted from the sensor, determines if the sensor detects the change in light and follows this process by converting it into an electrical signal.
+
+\boldtitle{Thermoelectric Sensor Principle}
+Thermoelectric sensors operate by detecting the voltage that is generated due to a difference in temperature. A commonly used sensor that uses this principle is a thermocouple. This component consists of two conductors that are made of different materials. If the junction of those materials experiences a temperature change, a thermoelectric voltage is created that is directly proportional to the change in temperature. Thermoelectric sensors are used to measure the temperature.
+
+\boldtitle{Magnetic Sensor Principle}
+Magnetic sensors work by detecting changes in the magnetic field, considering the strength or the direction of the magnetic field, and converting them into electric signals. An example for a magnetic sensor is the Hall effect sensor. It detects changes in the distribution of a magnetic field in order to recognize the strength of a field. Magnetic sensors are used for position detection and speed counting.
+
+\noindent\cite{LRWeb:58}

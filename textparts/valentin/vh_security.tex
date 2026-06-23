@@ -1,0 +1,106 @@
+\chapter{Security}
+\label{chap:security}
+
+\section{Introduction}
+Security in mobile application development is a multi-dimensional challenge that extends beyond the application code to include the runtime environment, data storage mechanisms, and network communication channels. When selecting a development framework, architects must evaluate how the chosen technology influences the application's attack surface.
+
+This chapter presents a comparative analysis of the security postures of \textit{React Native}, \textit{Ionic}, \textit{NativeScript}, \textit{Flutter}, \textit{.NET MAUI}, \textit{Tauri}, \textit{Kotlin Multiplatform (KMP)}, and strictly \textit{Native} development. The comparison focuses on four critical vectors: \textbf{source code obfuscation (reverse engineering resilience)}, \textbf{secure storage capabilities}, \textbf{runtime integrity}, and \textbf{architectural vulnerabilities}.
+
+\section{Architectural Security Classification}
+To understand the security implications of each framework, we must first classify them by their execution model, as this dictates their inherent vulnerabilities.
+
+\begin{itemize}
+    \item \textbf{WebView-based (Ionic, Tauri):} These applications rely on a browser engine (WebView) to render the UI. The primary security risks are Web vulnerabilities such as Cross-Site Scripting (XSS) and context isolation breaches.
+    \item \textbf{Bridge-based (React Native, NativeScript):} These frameworks execute JavaScript (JS) code in a separate runtime and communicate with native modules via a bridge. The logic is interpreted or Just-In-Time (JIT) compiled, making the source code more accessible if not properly bundled.
+    \item \textbf{Compiled/Native (Flutter, .NET MAUI, KMP, Native):} These frameworks compile source code into machine code (ARM) or intermediate language (IL). They generally offer higher resilience against reverse engineering compared to JS-based alternatives.
+\end{itemize}
+
+\section{Framework-Specific Security Analysis}
+
+\subsection{Native Development (iOS \& Android)}
+Native development (Swift/Kotlin) serves as the baseline ``Gold Standard'' for security.
+\begin{itemize}
+    \item \textbf{Code Protection:} Native apps allow for extensive obfuscation using tools like R8 or ProGuard (Android) and compiler optimizations (iOS). While not impossible to reverse engineer, stripping symbols makes it significantly more time-consuming.
+    \item \textbf{API Access:} They have immediate, zero-day access to the latest OS security features (e.g. \textit{CryptoKit}, \textit{BiometricPrompt}) without waiting for third-party wrappers.
+    \item \textbf{Vulnerability:} The primary risk is human error—implementing security features inconsistently across the two separate codebases.
+\end{itemize}
+
+\subsection{React Native}
+React Native is widely adopted but introduces specific risks due to its JavaScript nature.
+\begin{itemize}
+    \item \textbf{Source Code Exposure:} By default, the business logic is bundled into a JavaScript bundle. Although mostly minified, it is easily readable by attackers. Using the \textit{Hermes} engine helps by pre-compiling JS into bytecode, but it is not as robust as native machine code.
+    \item \textbf{Bridge Vulnerabilities:} The communication bridge between JS and Native layers can be intercepted if not properly secured, although the move to the New Architecture (JSI) reduces this serialization overhead and risk.
+    \item \textbf{Storage:} It lacks built-in secure storage. Developers must rely on community libraries like \texttt{react-native-keychain}\footnote{https://www.npmjs.com/package/react-native-keychain}, introducing supply-chain risks.
+\end{itemize}
+
+\subsection{Flutter}
+Flutter creates a unique security profile by bypassing standard OS UI rendering.
+\begin{itemize}
+    \item \textbf{Reverse Engineering:} Flutter compiles Dart code into a binary snapshot. Reverse engineering these snapshots is notoriously difficult compared to Java/Kotlin decompilation, as the structure is proprietary and lacks standard object headers.~\cite{SEC:FT:01}
+    \item \textbf{Data Integrity:} Since Flutter draws its own UI pixels, it is less susceptible to certain OS-level UI tampering or ``screen overlay'' attacks that target standard native views. This is also the reason why password managers might not work in Flutter applications.
+    \item \textbf{Weaknesses:} When correctly configured, Flutter presents a relatively small attack surface. However, as with any framework, insecure coding practices at the application level—such as improper key storage or unvalidated user input—can still introduce vulnerabilities.
+\end{itemize}
+
+\subsection{Ionic}
+Ionic applications are essentially web applications running inside a native container (Capacitor).
+\begin{itemize}
+    \item \textbf{XSS Risk:} The most critical vulnerability is Cross-Site Scripting. If an attacker injects a script into the WebView, they may gain access to the underlying native bridge, compromising the entire device. \cite{SEC:ION:01}
+    \item \textbf{Code Visibility:} As a web-based framework, the source code (HTML/JS/CSS) is packaged in the \texttt{assets} folder. It is trivial to extract and read unless aggressive obfuscation is applied. \cite{SEC:ION:02}
+\end{itemize}
+
+\subsection{NativeScript}
+NativeScript allows direct access to native APIs via JavaScript without standard wrapper plugins.
+\begin{itemize}
+    \item \textbf{API Surface:} Because NativeScript can access \textit{any} native API via JS reflection, a compromised JS context has total control over the device (e.g. Camera, Filesystem) without needing specific bridge permission definitions in the code.
+    \item \textbf{Obfuscation:} Like React Native, the logic is JavaScript. However, NativeScript offers proprietary JIT compilation which can be slightly harder to inspect than a standard webpack bundle. \cite{SEC:NS:01}
+\end{itemize}
+
+\subsection{.NET MAUI (formerly Xamarin)}
+MAUI leverages the enterprise-grade .NET ecosystem.
+\begin{itemize}
+    \item \textbf{Compilation:} On iOS, MAUI uses Ahead-of-Time (AOT) compilation, producing native ARM binaries that are highly secure. On Android, it often relies on Just-In-Time (JIT) and Intermediate Language (IL) assemblies, which are easily decompiled (similar to Java) unless tools like \textit{Dotfuscator} are used.
+    \item \textbf{Enterprise Features:} It has strong built-in support for cryptography and authentication libraries authenticated by Microsoft.
+\end{itemize}
+
+\subsection{Kotlin Multiplatform (KMP)}
+KMP is emerging as a secure alternative by sharing logic while keeping the UI native.
+\begin{itemize}
+    \item \textbf{Shared Logic Security:} The shared Kotlin code compiles to standard JVM bytecode for Android and an LLVM-based native binary for iOS. This ensures that the iOS security posture is identical to a native Swift app.
+    \item \textbf{Auditability:} Since KMP integrates directly into native build systems (Gradle/Xcode), standard security analysis tools work seamlessly, unlike with Flutter or React Native which require specialized scanners.
+\end{itemize}
+
+\subsection{Tauri}
+Tauri (v2.0+) brings Rust's security guarantees to mobile.
+\begin{itemize}
+    \item \textbf{Memory Safety:} The backend logic is written in Rust, which is memory-safe by default, eliminating entire classes of vulnerabilities like buffer overflows.
+    \item \textbf{Isolation:} Tauri enforces a strict isolation pattern where the frontend (WebView) cannot directly access system APIs. It must pass messages to the Rust backend, which validates all requests. This architectural ``air gap'' makes it significantly more secure than Ionic, despite both using WebViews.
+\end{itemize}
+
+\section{Comparative Evaluation}
+
+The following table summarizes the security characteristics of the analyzed frameworks. The ``Reverse Engineering Difficulty'' rates the effort required for an attacker to recover the source logic.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|p{3.5cm}|p{3.5cm}|c|}
+\hline
+\textbf{Framework} & \textbf{Core Language \& Runtime} & \textbf{Source Code Vulnerability} & \textbf{Rev. Eng. Difficulty} \\ \hline
+\textbf{Native} & Swift/Kotlin (Native) & Low (Compiled, Stripped) & High \\ \hline
+\textbf{Flutter} & Dart (C++ Engine) & Low (Binary Snapshot) & High \\ \hline
+\textbf{KMP} & Kotlin (JVM/Native) & Low (Android, ProGuard) / Low (iOS) & High \\ \hline
+\textbf{.NET MAUI} & C\# (.NET Runtime) & Medium (IL Decompilation) & Medium-High \\ \hline
+\textbf{Tauri} & Rust + JS (WebView) & Low (Backend) / High (Frontend) & High (Backend) \\ \hline
+\textbf{React Native} & JS/TS (Hermes/JSI) & High (Bundle Extraction) & Low \\ \hline
+\textbf{NativeScript} & JS/TS (V8/JSC) & High (Metadata Reflection) & Low \\ \hline
+\textbf{Ionic} & JS/TS (WebView) & High (XSS \& Source) & Very Low \\ \hline
+\end{tabular}
+\caption{Security Comparison of Mobile Frameworks}
+\label{tab:security_comparison}
+\end{table}
+
+\section{Conclusion}
+From a security perspective, \textbf{Native} development and \textbf{Kotlin Multiplatform} remain the superior choices for high-risk applications (e.g. banking), as they integrate seamlessly with OS-level security protections and obfuscation toolchains. 
+
+\textbf{Flutter} offers a surprisingly robust security profile due to its proprietary binary format, which acts as a ``black box'' to many standard reverse-engineering tools. 
+
+Conversely, JavaScript-based frameworks like \textbf{React Native}, \textbf{NativeScript}, and \textbf{Ionic} require significant additional effort—such as third-party obfuscators (e.g. Jscrambler) and strict CSP (Content Security Policy) configurations—to achieve a comparable security level. \textbf{Tauri} represents a promising middle ground, mitigating the risks of the WebView approach by leveraging a hardened Rust backend.

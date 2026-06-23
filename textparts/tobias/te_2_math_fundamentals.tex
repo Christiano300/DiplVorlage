@@ -1,0 +1,679 @@
+\chapter{Fundamentals of 3D Mathematics}\label{chap:tobias-introduction}
+In computer graphics, everything seen on the screen is the result of many mathematical operations that change an objects position, scale, or orientation. This chapter covers the fundamental mathematical operations used to manipulate these attributes. This also includes the coordinate spaces an object moves in, vector and matrix operations.
+
+
+\section{Vectors}
+A vector describes a geometric object that has both direction and magnitude. It can be visualized by drawing an arrow from its tail towards its head point. The tail represents the starting point while the head is the end point where the vector stops.\ \cite{Web:09}
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.6]{images/Vector.png}
+	\caption{Vectors,\ \cite{Web:70}}\label{fig:Vectors_Example01}
+\end{figure}
+
+In computer graphics vectors are often used to define movements, positions and directions of objects. This applies for both 3D and 2D space.\ \cite{Web:10}
+
+
+\subsection{Vector Addition and Subtraction}
+\subsubsection{Addition}
+Adding vectors is one of the most important vector operations. When adding two vectors together, the resultant vector closes the triangle.
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.5]{images/AddingVectorsGraphically.png}
+	\caption{Adding Vectors,~\cite{Web:71}}\label{fig:Vectors_Example02}
+\end{figure}
+
+Adding vectors works in the same way as adding matrices. The example in Figure~\ref{fig:Vectors_Example02} shows a vector $\overrightarrow{r_{1}}$ and a vector $\overrightarrow{r_{2}}$. If we add those two vectors we obtain a sum vector $\overrightarrow{r}$. When we set the tail point of $\overrightarrow{r_{2}}$ to the head point of $\overrightarrow{r_{1}}$ we will get a triangle as a result.\ \cite{Web:10}
+
+
+\subsubsection{Subtraction}
+Subtracting vectors is identical to adding vectors. The key difference is that subtracting is like adding vectors in the opposite direction.
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.55]{images/vektor-subtraktion.png}
+	\caption{Subtracting Vectors}\label{fig:Vectors_Example03}
+\end{figure}
+
+In figure~\ref{fig:Vectors_Example03} we have two vectors $a$ and $b$. When subtracting these vectors our sum vector points into a different quadrant. As in vector addition the tail point of $b$ the one being subtracted can be set to the head point of our first vector $a$ and the result will be a closed triangle.\ \cite{Web:10}
+
+
+
+\subsection{Scalar Multiplication}
+If a vector is multiplied with a scalar then the vector will be longer or shorter. The result will have the same direction as the initial vector but it has a different length.\ \cite{Web:11}
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.3]{images/scalarmult.png}
+	\caption{Scalar Multiplication}\label{fig:Vectors_Example04}
+\end{figure}
+
+In the example of Figure~\ref{fig:Vectors_Example04} we have a vector $a$ with its tail point at the origin of the coordinate system and a head point at $x=4$ and $y=3$. It was multiplied by $1.5$ and results in $a_{scaled}$ having its head point at $x=6$ and $y=4.5$.
+
+\[a \cdot n = a_{scaled} \Longrightarrow \begin{pmatrix} 4 \\ 3\end{pmatrix} \cdot 1.5 = \begin{pmatrix} 6 \\ 4.5 \end{pmatrix}\]
+
+\textbf{Variables: } \\
+$a$ = initial vector
+
+$n$ = scalar
+
+$a_{scaled}$ = scaled vector \\
+
+
+
+\subsection{Dot Product}
+The most used way to combine two vectors into a scalar is the dot product. It helps getting the angle between two vectors. There are multiple applications like lighting, orientation and movement of an object and physics\ \cite{Web:12}. There are two equations for two different applications of the dot product.
+\[
+\vec{a} = \begin{bmatrix}
+a_{1}\\
+a_{2}\\
+a_{3}
+\end{bmatrix}
+\quad
+\vec{b} = \begin{bmatrix}
+b_{1}\\
+b_{2}\\
+b_{3}
+\end{bmatrix}
+\]
+
+\[
+\vec{a} \cdot \vec{b} = a_{1}\cdot b_{1} +a_{2}\cdot b_{2} +a_{3}\cdot b_{3}
+\]
+
+This equation defines the dot product. If both vectors are normalized, the value of the dot product tells us how similar their directions are:
+\begin{itemize}
+    \item 1: the vectors point in the same direction
+    \item 0: the vectors are perpendicular on each other 
+    \item -1: the vectors point in opposite directions 
+\end{itemize}
+
+\noindent\cite{Web:14}
+
+By definition the dot product is:
+
+\[\vec{a} \cdot \vec{b} = \left| a \right|  \left| b \right| \ \cos\theta\]
+
+Now to get the angle between two vectors the equations needs to be solved for $\theta$.\ \cite{Web:13}
+
+\[
+\begin{aligned}
+\cos\theta = &\frac{\vec{a} \cdot \vec{b}}{\left| a \right|  \left| b \right|}\\
+\theta = \cos^{-1}\biggl(&\frac{\vec{a} \cdot \vec{b}}{\left| a \right|  \left| b \right|}\biggr)
+\end{aligned}
+\]
+
+
+\subsection{Cross Product}
+The cross product of two vectors results in a vector perpendicular to both vectors. Calculating the cross product is only possible with three dimensional vectors and is often used to determine normal vectors of reflections and lighting.\ \cite{Web:15}
+
+\[
+\vec{a} = \begin{bmatrix}
+a_{1}\\
+a_{2}\\
+a_{3}
+\end{bmatrix}
+\quad
+\vec{b} = \begin{bmatrix}
+b_{1}\\
+b_{2}\\
+b_{3}
+\end{bmatrix}
+\]
+
+When calculating the cross product it looks like this:
+
+\[
+\vec{a} \times \vec{b} = 
+\begin{bmatrix} 
+a_{2} b_{3} - a_{3} b_{2} \\
+a_{3} b_{1} - a_{1} b_{3} \\
+a_{1} b_{2} - a_{2} b_{1}
+\end{bmatrix}
+\]
+\noindent\cite{Web:14}
+
+The cross product can also be defined as:
+\[\vec{a} \times \vec{b} = \vec{n} \left| \vec{a} \right| \left| \vec{b} \right| \sin(\theta) \]
+The vector $n$ defines the unit vector. The unit vector is a vector with a magnitude of 1 and indicates a direction. To get the angle of the cross product, the equation can be solved by $\theta$:
+
+\[\left| \vec{a} \times \vec{b} \right| = \left| \vec{a} \right| \left| \vec{b} \right| \sin(\theta)\]
+\[
+\sin\theta = \frac{\left| \vec{a} \times \vec{b} \right| }{\left| \vec{a} \right|  \left| \vec{b} \right|}
+\]
+\[
+\theta = \sin^{-1}(\frac{\left| \vec{a} \times \vec{b} \right| }{\left| \vec{a} \right|  \left| \vec{b} \right|})
+\]
+
+Since the magnitude of the vector $\vec{n}$ is 1, it can be ignored in the equation.\ \cite{Web:12}
+
+
+\section{Matrices}
+
+\subsection{Basics and Structure}
+Matrices are two dimensional structures with rows and columns that hold scalar values. It can also be defined as a collection of row vectors and column vectors. In computer graphics they are mostly used for rotations, scaling and rotations.\ \cite{Web:17}
+
+When defining matrices the annotation looks like this:
+
+\[
+A_{r, c} = 
+\begin{bmatrix}
+a_{11} & a_{12} & \cdots & a_{1n} \\
+a_{21} & a_{22} & \cdots & a_{2n} \\
+\vdots & \vdots & \ddots & \vdots \\
+a_{m1} & a_{m2} & \cdots & a_{mn} \\
+
+\end{bmatrix}
+\]
+
+\textbf{Variables: } \\
+$A_{r,c}$ = Matrix $A$ with $r$ rows and $c$ columns
+
+$a_{mn}$ = object at position row $m$ and column $n$
+
+The most basic matrix operations are adding and subtracting matrices. Only matrices of the same size can perform those operations.
+
+\subsubsection{Addition}
+\[
+\begin{bmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22} \\
+\end{bmatrix}
++
+\begin{bmatrix}
+b_{11} & b_{12} \\
+b_{21} & b_{22} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+a_{11} + b_{11} & a_{12}+b_{12} \\
+a_{21} + b_{21} & a_{22}+b_{22} \\
+\end{bmatrix}
+\]
+
+Matrix addition is commutative. This means that multiple matrices can be added together in any order and have the same result.\ \cite{Web:23}
+\[
+A + B = B + A
+\]
+
+\subsubsection{Subtraction}
+\[
+\begin{bmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22} \\
+\end{bmatrix}
+-
+\begin{bmatrix}
+b_{11} & b_{12} \\
+b_{21} & b_{22} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+a_{11} - b_{11} & a_{12}-b_{12} \\
+a_{21} - b_{21} & a_{22}-b_{22} \\
+\end{bmatrix}
+\]
+
+Unlike matrix addition, the subtraction is non-commutative and results in different outcomes, when the order is changed.
+
+\subsection{Matrix Multiplications}
+In computer graphics, matrix multiplication is one of the most important matrix operations. It is being used for example when moving or rotating objects in space or converting coordinates into another space coordinates. There are similarities to vector operations.
+
+\subsubsection{Multiplication of two matrices}
+Two matrices can be multiplied if the dimension of the columns from the first matrix equals the dimensions of the rows from the second matrix. 
+
+\[A_{m,n} \cdot B_{i,j} = C_{m,j} \Longleftrightarrow n = i\]
+
+
+For multiplying two matrices, we utilize the dot product mentioned in the vectors chapter. When multiplying, we iterate through both matrices and multiply the current row of the first matrix with the current column of the second matrix. In other words, the dot product will be calculated for the current row and column. \\
+\\
+\textbf{Example:} \\
+\[
+A_{m,n} = 
+\begin{bmatrix}
+2 & 3 \\
+6 & 4
+\end{bmatrix}
+,
+B_{i,j} = 
+\begin{bmatrix}
+5 & 1 \\
+4 & 2
+\end{bmatrix}
+\\ 
+\]
+\[
+A_{m,n} \cdot B_{i,j} = C_{m,j} =
+\begin{bmatrix}
+22 & 8 \\
+46 & 14
+\end{bmatrix}
+\]
+
+\textbf{Variables: } \\
+$m,n$ = rows and columns of the matrix $A$
+
+$i,j$ = rows and columns of the matrix $B$
+
+$m,j$ = rows and columns of the resulting matrix $C$ \\
+
+Matrix multiplication is non-commutative. This means that a different order in multiplication of matrices result in different outcomes.\ \cite{Web:23}
+\[
+A \cdot B \neq B \cdot A
+\]
+
+\subsubsection{Multiplying scalars with matrices}
+
+Multiplying a scalar with a matrix is the same as scalar multiplication with vectors, just with multiple dimensions.
+
+\textbf{Example:}
+
+\[
+\begin{aligned}
+A_{m,n} &= 
+\begin{bmatrix}
+2 & 3 \\
+1 & 4
+\end{bmatrix}\\
+2 \cdot A_{m,n} &=
+\begin{bmatrix}
+4 & 6 \\
+2 & 8
+\end{bmatrix}
+\end{aligned}
+\]
+
+
+\subsection{Properties}
+Matrices have several mathematical properties that determine their behaviour under various operations. These properties are essential for the correct application of matrices in mathematical contexts. This subsection focuses on basic general properties which need to be considered when working with matrices.
+
+\subsubsection{Equality of Matrices}
+Two matrices are equal if and only if they have the same dimensions. In addition, all elements in the matrices need to be the same.\ \cite{Web:18}
+\[
+A_{m,n} = B_{p,q} \Longleftrightarrow   m = p \land n = q
+\]
+
+\subsubsection{Transposing of Matrices}
+The transpose of matrices is defined by swapping rows and columns in a matrix. Formally the transposed Matrix $A_{m,n}$ would equal to $A^T_{\ n,m}$.\ \cite{Web:18}
+
+\[
+A_{m,n}=
+\begin{bmatrix}
+a & b \\
+c & d \\
+\end{bmatrix}
+\Longrightarrow 
+A^T_{n,m}=
+\begin{bmatrix}
+a & c \\
+b & d \\
+\end{bmatrix}
+\]
+
+\subsubsection{Inversion of Matrices}
+The first step of calculating a inverse matrix is swapping $a$ and $d$ in the matrix and invert the sign of $b$ and $c$. Then the whole matrix is being multiplied with 1 divided by the determinant of the original matrix.\ \cite{Web:19}
+\[
+A^{-1} = \frac{1}{a \cdot d - b \cdot c} \cdot
+\begin{bmatrix}
+d & -b \\
+-c & a 
+\end{bmatrix}
+\]
+
+
+\subsection{Special Matrices}
+In computer graphics, there are many applications for matrices that need special properties or structure to properly perform these. Those are referred to special matrices which are crucial for transformations, coordinate system changes and matrix computations. This chapter introduces the most important matrices used in computer graphics.
+
+\subsubsection{Identity Matrix}
+An identity matrix is a square matrix as well as a special diagonal matrix where the diagonal elements equal 1 and the rest is filled with zeros. Its most important property is it's multiplicative identity. When multiplying a matrix $A$ with a compatible identity matrix $I$ it results in the same matrix $A$.\ \cite{Web:20}
+
+\[
+A_{(2,2)} = 
+\begin{bmatrix}
+3 & 4 \\
+6 & 1
+\end{bmatrix} \quad
+I = \begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix}
+\]
+\[
+A_{(2,2)} \cdot I = A_{(2,2)}
+\]
+
+In computer graphics this matrix is used as a initial state since it represents a transformation with no effect. It allows for neutral operations on objects. If an object for example needs no rotation or translation then it can be multiplied with the identity matrix and remain unchanged. Another application for this type of matrix is to set an object back to it's starting point removing any transformation applied before.
+
+
+\subsubsection{Zero Matrix}
+A zero matrix is a matrix where all elements are equal to zero. It acts as a neutral element in addition. While an identity matrix applies no changes in multiplication, adding a zero matrix to a matrix $A$ leaves $A$ unchanged.\ \cite{Web:21}
+
+\[
+A_{(2,2)} = 
+\begin{bmatrix}
+3 & 4 \\
+6 & 1
+\end{bmatrix} \quad
+\mathbf{0} = 
+\begin{bmatrix}
+0 & 0 \\
+0 & 0
+\end{bmatrix}
+\]
+
+\[
+A_{(2,2)} + \mathbf{0} = A_{(2,2)}
+\]
+
+When multiplying a matrix or vector with a zero matrix, it results in a zero matrix or zero vector. This removes any information about the initial matrix or vector.
+
+In computer graphics, a zero matrix does not represent a transformation. Therefore it has no direct geometric interpretation in computer graphics unlike the identity matrix.
+
+
+\subsubsection{Orthogonal Matrix}
+A orthogonal matrix is a square matrix, where the transpose of the initial matrix is equal to the inverse of the same matrix. When multiplying the transpose with it's initial state it results in a identity matrix.\ \cite{Web:22}
+
+\[
+A^T = A^{-1} 
+\]
+\[
+A \cdot A^T = I
+\]
+
+\textbf{Variables: } \\
+$A$ = initial matrix
+
+$I$ = identity matrix \\
+
+These matrices represent transformations including reflection, rotation, or a combination of both. If being multiplied with a vector it preserves the magnitude and changes the orientation of the vector.\ \cite{Web:22}
+
+
+
+\section{Linear Transformations}
+Linear transformations combine vector and matrix operations to change the orientation and position of a point in space. Every move of an object is represented using matrices, which enables an efficient and consistent transformation of objects. This subsection focuses on the most important transformations used in computer graphics.
+
+\subsection{Translations}
+Every time we move from a point to another, we change our position in space. In mathematical terms, this is described as a translation. In computer graphics the position of a point or an object is specified in the Cartesian coordinate system which means the position is a vector of X-, Y-, and Z-coordinates in a three-dimensional space.
+
+\[
+T = 
+\begin{bmatrix}
+1 & 0 & 0 & t_x \\
+0 & 1 & 0 & t_y \\
+0 & 0 & 1 & t_z \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+\]
+\noindent\cite{Web:36}
+
+This represents a matrix for a translation. It changes the objects positions when multiplying the matrix with a position vector.
+
+\textbf{Variables: } \\
+$T$ = translation matrix
+
+$t_x, t_y, t_z$ = translation on the X-, Y-, and Z-Axis \\
+
+As shown in the example above, a translation needs a $4 \times 4$ matrix to work. When using a $3 \times 3$ matrix, a addition needs to be performed which is not possible since the position vector and the matrix do not match with their dimensions. The solution to the problem is to add a fourth row to the vector and a fourth column and row to the matrix. This allows to manipulate the position without changing the coordinates to a factor.\ \cite{Web:36}
+
+\[
+\begin{bmatrix}
+x_t \\
+y_t \\
+z_t \\
+1
+\end{bmatrix}
+ = 
+\begin{bmatrix}
+1 & 0 & 0 & t_x \\
+0 & 1 & 0 & t_y \\
+0 & 0 & 1 & t_z \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+x \\
+y \\
+z \\
+1
+\end{bmatrix}
+\]
+\noindent\cite{Web:36}
+
+\textbf{Variables: } \\
+$x_t, y_t, z_t$ = translated X-, Y-, and Z-Axis
+
+$t_x, t_y, t_z$ = translation on the X-, Y-, and Z-Axis \\
+
+\subsection{Rotation Matrices}
+While translations change the position of an object, rotation matrices change the orientation of an object in space. Unlike translations, rotations must be performed around a specific axis. This requires separate rotation matrices for each axis in the coordinate system.\ \cite{Web:37}
+\begin{figure}[H]
+    	\centering
+    		\includegraphics[scale=0.5]{images/3drotation.png}
+    	\caption{Rotation around the axis}\label{fig:rotation_example}
+    \end{figure}
+
+\[
+R_x =
+\begin{bmatrix}
+0 & 0 & 0 & 0 \\
+0 & \cos \alpha & -\sin \alpha & 0 \\
+0 & \sin \alpha & \cos  \alpha & 0 \\
+0 & 0 & 0 & 1 
+\end{bmatrix}
+R_y = \begin{bmatrix}
+\cos \alpha & 0 & \sin \alpha & 0 \\
+0 & 1 & 0 & 0 \\
+-\sin \alpha & 0 & \cos  \alpha & 0 \\
+0 & 0 & 0 & 1 
+\end{bmatrix}
+R_z = \begin{bmatrix}
+\cos \alpha & -\sin \alpha & 0 & 0 \\
+\sin \alpha & \cos  \alpha & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 
+\end{bmatrix}
+\]
+\noindent\cite{raytracerbook:book}
+
+\subsubsection{Variables: }
+$R_x, R_y, R_z$ = Rotation matrix around the X-, Y- and Z-axes
+
+To apply a rotation on all axes, the rotation matrices can be multiplied together with the position vector sequentially. For example:
+
+\[
+P_r = R_z \cdot R_y  \cdot R_x \cdot P
+\]
+
+
+
+\subsection{Scaling}
+An object can not only be manipulated by its position or rotation but also by it's scale. This is possible when multiplying the coordinates of an object's vertices by a scaling factor.
+
+\[
+S = 
+\begin{bmatrix}
+s_x & 0 & 0 & 0 \\
+0 & s_y & 0 & 0 \\
+0 & 0 & s_z & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+\]
+
+\textbf{Variables: } \\
+$S$ = scaling matrix
+
+$s_x, s_y, s_z$ = scaling factor of the X-, Y-, and Z-Axis \\
+
+This matrix is applied to every vertex's position vector to change the object's size.
+
+\[
+\begin{bmatrix}
+x_s \\
+y_s \\
+z_s \\
+1
+\end{bmatrix}
+ = 
+\begin{bmatrix}
+s_x & 0 & 0 & 0 \\
+0 & s_y & 0 & 0 \\
+0 & 0 & s_z & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+x \\
+y \\
+z \\
+1
+\end{bmatrix}
+\]
+
+\textbf{Variables: } \\
+$x_s, y_s, z_s$ = scaled X-, Y-, and Z-Axis
+
+$s_x, s_y, s_z$ = scaling factor the X-, Y-, and Z-Axis\\\cite{Web:72}
+
+
+\subsection{Combination of transformations}
+In practice most of the times there is not only one transformation applied onto an object. In case of for example animated computer graphics there are many transformations being applied per second. To achieve that the transformations can be applied sequentially onto an object. It is important to consider in which order the matrices need to be applied to.~\cite{Web:38}
+
+\[
+P_{transformed} = R \cdot T \cdot P
+\]
+
+\textbf{Variables:}\\
+$P_{transformed}$ = Position after all transformations
+
+$P$ = Position vector
+
+$T$ = Translation matrix
+
+$R$ = Rotation matrix
+
+The transformation matrices need to be applied in reverse order to be correct. For example the result will be different when first applying the translation and then the rotation than in reverse order.\ \cite{Web:38}
+
+
+
+\section{Coordinate Spaces}
+Coordinate systems are the mathematical basis for describing position or movements in space. Various systems exist, such as the Cartesian coordinate system which uses x-, y-, and z-axis, and the spherical coordinate system, which defines positions with angles and radial distance\ \cite{Web:35}. These systems build the foundation for vector calculations and transformations, which makes them indispensable for computer graphics. \\
+This chapter focuses on the most important coordinate spaces used for computer graphics. All coordinate spaces mentioned in this chapter are based on the Cartesian coordinate system.
+
+\subsection{Local Space}
+    Every object has its own coordinate system in addition to a shared one. In computer graphics, local coordinates are used for this approach. It defines
+    a coordinate system specific to a particular object or region and makes it possible to combine multiple objects in one coordinate space with it's own origin, axes, orientation and scale. That means that if an object is moved in the local space, its coordinates in the superior 
+    space will not change.\ \cite{Web:01}
+
+    \begin{figure}[H]
+    	\centering
+    		\includegraphics[scale=3.2]{images/clip5213_zoom60.jpg}
+    	\caption{local coordinate systems}\label{fig:LocalCoordinateSystems_Example_01}
+    \end{figure}
+
+    An example of a usage for local coordinate systems would be 3D modeling software\ \cite{Web:02}. When thinking of a 3D modeled arm, when the forearm becomes a child object of the upper arm, it also becomes a part of the parents local coordinate system.
+    Since the forearm also has its own local coordinate system, the origin of its system acts as the elbow, serving as a pivot point. If the upper arm system is being transformed, every child object will transform in the same way, since it exists within the same hierarchical structure.
+
+
+\subsection{World Space}
+The World Coordinate System is the highest-level coordinate system in computer graphics. It contains all absolute positions and orientations of the objects, cameras, and light which are specified in a 3D scene. Changing local coordinates does not affect on world space coordinates, since it is an encapsulated system. When an object in world space is moved, its local coordinate system moves along with it.\ \cite{Web:03, Web:04}
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.35]{images/pic004.png}
+	\caption{Coordinate Systems,~\cite{Web:68}}\label{fig:LocalCoordinateSystems_Example_01b}
+\end{figure}
+
+Figure~\ref{fig:LocalCoordinateSystems_Example_01} shows objects in a world space coordinate system with their own individual local coordinate axis.
+
+These types of coordinate systems are comparable to the universe. The universe contains every object that exists. Every object has its orientation and rotation independent of their position in the space around them. They have a local coordinate system with their absolute positions in world space.\ \cite{Web:05}
+
+
+\[P_{world} = M \cdot P_{local}\]
+
+
+\textbf{Variables:} \\
+$P_{world}$ = resulting position in the world coordinate system
+
+$M$ = the object's transformation matrix
+
+$P_{local}$ = position vector in the object's local coordinate system
+
+
+The transformation matrix $M$ is a $4 \times 4$ matrix with the rotation, scaling and translation of the object. By multiplying $M$ with the object's local position it transforms the point from local space to world space.
+
+\subsection{Camera}
+The camera coordinate system is a system, where the origin equals the optical center of the camera with the z-axis being parallel to the direction the camera is facing\ \cite{Web:06}. The cameras view is then projected to the screen. To display the objects, their world coordinates need to be converted into coordinates relative to the view of the camera.\ \cite{Web:07}
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.45]{images/world_to_view.png}
+	\caption{Converting Camera Conventions,~\cite{Web:69}}\label{fig:LocalCoordinateSystems_Example_02}
+\end{figure}
+
+\[
+M_{\text{camera}} =
+\begin{bmatrix}
+right_{x} & up_{x} & forward_{x} & position_{x} \\
+right_{y} & up_{y} & forward_{y} & position_{y} \\
+right_{z} & up_{z} & forward_{z} & position_{z} \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\]
+
+\textbf{Variables:}\\
+$M_{camera}$ = transformation matrix of the camera
+
+$right_{x,y,z}$ = right vector (X)
+
+$up_{x,y,z}$ = up vector (Y)
+
+$forward_{x,y,z}$ = forward vector (Z)
+
+This is the camera transformation matrix, which represents the cameras orientation and position in world space. This matrix is the result of multiplying the translation matrix with the rotation matrix.\ \cite{Web:07}
+
+\[M_{camera} = T_{camera} \cdot R_{camera}\]
+
+Note: Matrices are multiplied with column vectors, therefore the translation matrix will be applied after the rotation matrix
+
+\[
+\begin{bmatrix}
+right_{x} & up_{x} & forward_{x} & position_{x} \\
+right_{y} & up_{y} & forward_{y} & position_{y} \\
+right_{z} & up_{z} & forward_{z} & position_{z} \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+=
+\begin{bmatrix}
+1 & 0 & 0&position_{x}\\
+0&1&0&position_{y}\\
+0&0&1&position_{z}\\
+0&0&0&1
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+right_{x} & up_{x} & forward_{x} & 0 \\
+right_{y} & up_{y} & forward_{y} & 0 \\
+right_{z} & up_{z} & forward_{z} & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\]
+
+\textbf{Variables:}\\
+$M_{camera}$ = transformation matrix of the camera
+
+$T_{camera}$ = translation matrix of the camera\ \cite{Web:08}
+
+$R_{camera}$ = rotation matrix of the camera\ \cite{Web:08}
+
+Now when the object needs to be converted from world space to camera space, the transformation matrix $M_{camera}$ need to be inverted to get a view matrix. The view matrix can be multiplied with a point in world space to be converted to camera space.\ \cite{Web:07}
+
+\[V = M^{-1}\]
+\[P_{camera} = V \cdot P_{world}\]
+
+\textbf{Variables: } \\
+$V$ = view matrix (inverse of the camera transformation matrix)
+
+$P_{world}$ = point in world space
+
+$P_{camera}$ = point in camera space\\

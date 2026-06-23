@@ -1,0 +1,677 @@
+\chapter{Frameworks and Libraries for 3D}
+There are numerous frameworks and libraries to choose from when it comes to 3D visualisation in web applications. Each of them has their strengths and limitations, particularly when it comes to functionality and ease of use. Some of them prioritize a beginner-friendly user experience for creating 3D scenes, while others give more control over certain aspects such as the rendering-pipeline, shaders and more. The choice of the right framework depends on their use case and can either make development easier or time-consuming. This chapter focuses on four of the most popular options. To show a small portion of the programming experience, every framework was tested by showing a rectangle on the screen as an example.
+
+
+\section{WebGL}
+WebGL is the cornerstone for most modern graphics web libraries. Being based on OpenGL ES, it is a performant way to display graphics in a web application. Due to its low level nature, the graphics API allows full control over core features such as the rendering-pipeline and buffers. 
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.3]{images/webgl-website.png}
+  \caption{WebGL Example,~\cite{Web:24}}\label{fig:WebGL_example_01}
+\end{figure}
+
+WebGL is a demanding option, as most processes need to be done by the user themselves. Therefore, it is more complicated than other frameworks and not worth the effort for most applications that do not need every bit of performance. Especially during early stages of development, a significant amount of boilerplate code is used which can increase the size and complexity of the codebase. 
+
+This API is primarily used for large-scale projects that require good optimization and efficiency to achieve a smooth user experience. This includes applications like web 3D modeling software and complex 3D games.
+
+\subsubsection{WebGL 1.0 vs WebGL 2.0}
+WebGL 2.0 is a modern and updated version of the original WebGL\@. It expanded the WebGL capabilities with the feature set of OpenGL ES 3.0 which brings WebGL closer to the modern state of GPU rendering. New features include advanced texture support, new features to the GL shading language, instanced rendering and multiple rendering targets\ \cite{Web:25}. 
+Although 2.0 introduces better performances and advanced modern features, it is not as well supported as 1.0. Due to its focus on modern graphic features, WebGL 2.0 lacks support for older browsers and mobile devices.\ \cite{Web:26}
+
+If an application needs a wide range of device support, it is recommended to stick with WebGL 1.0. There are ways to use both versions and still maintain a wide range of support:\ \cite{Web:26}
+\\
+\begin{lstlisting}[language=JavaScript, caption=WebGL version example]
+if (gl.getExtension('WEBGL_2')) {
+  // Use WebGL 2.0 features
+} else {
+  // Fallback to WebGL 1.0
+}
+\end{lstlisting}
+
+While this approach is viable for certain projects, it can lead to a significant increase in effort and time needed for the implementation. The size of the codebase will increase as well and can lead to confusion without thorough documentation.
+
+\subsubsection{Example}
+This example uses WebGL2 Fundamentals\ \cite{Web:27} as a foundation for the code.
+
+To be able to draw something on the screen, a canvas needs to be initialised with an id, a width and a height:
+\begin{lstlisting}[language={[AS]HTML}, caption=WebGL Rectangle example 1]
+<canvas #glCanvas width="800" height="600"></canvas>
+\end{lstlisting}
+
+After the Angular component initialised, a WebGL2 context is initialised on our context:
+\begin{lstlisting}[language=JavaScript,caption=WebGL Rectangle example 2]
+export class WebglRect implements AfterViewInit {
+  // Gets the HTML canvas in the component
+  @ViewChild('glCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+
+  // WebGL Rendering Context
+  gl!: WebGL2RenderingContext;
+
+  // Runs code when the Angular component was initialised
+  ngAfterViewInit(): void {
+    const canvas = this.canvasRef.nativeElement;
+    canvas.width = 800;
+    canvas.height = 600;
+    const gl = canvas.getContext('webgl2');
+
+    if (!gl) {
+      console.warn('WebGL context not found');
+      return;
+    }
+
+    this.gl = gl;
+    // Optional: outsource initalisation code into a method
+    this.initWebGL();
+  }
+...
+\end{lstlisting}
+
+After these steps, the rectangle vertices are initialised and a vertex and fragment shader, which we need to display our rectangle are declared as a string and handed over to a method which compiles and links the shaders:
+\begin{lstlisting}[language=JavaScript,caption=WebGL Rectangle example 3]
+initWebGL(): void {
+    const gl = this.gl;
+
+    // Vertex Shader
+    const vertexShader = `#version 300 es
+            in vec4 a_position;
+
+            void main() {
+              gl_Position = a_position;
+            }`;
+
+    // Fragment Shader
+    const fragmentShader = `#version 300 es
+            precision highp float;
+            out vec4 outColor;
+
+            void main() {
+              outColor = vec4(1, 0, 0.5, 1);
+            }`
+
+    // Creates a shader program and applies it
+    // Optional: createProgram() method to outsource shader compiling code
+    const program = this.createProgram(vertexShader, fragmentShader);
+    gl.useProgram(program);
+
+    // Vertices of the rectangle (2 triangles)
+    const rect_vertices = [
+      -0.5, -0.5,
+      0.5, -0.5,
+      -0.5, 0.5,
+      -0.5, 0.5,
+      0.5, -0.5,
+      0.5, 0.5
+    ]
+...
+\end{lstlisting}
+
+
+Here a Vertex Array Object is created in which our Vertex Buffer will be declared. Then the application defines how vertex buffer data is mapped to the shader's input attributes. At the end a viewport is defined and call a draw method to render the final result:
+\begin{lstlisting}[language=JavaScript,caption=WebGL Rectangle example 4]
+    // creates and binds a Vertex Array Object
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+
+    // creates and binds a Vertex Buffer Object which stores the vertices in the GPU memory
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rect_vertices), gl.STATIC_DRAW);
+
+    const posLoc = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    // created the viewport and sets the clearing color
+    gl.viewport(0,0,gl.canvas.width,gl.canvas.height);
+    gl.clearColor(0.8, 0.8, 0.8, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // binds vertex array and draws the triangles
+    gl.bindVertexArray(vao);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+\end{lstlisting}
+
+This method helps to compile the shaders and attach them to a program to use them:
+\begin{lstlisting}[language=JavaScript, caption=WebGL Rectangle example 5]
+createProgram(vertShader:string, fragShader:string): WebGLProgram {
+    const gl = this.gl;
+
+    // creates and compiles the vertex shader
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+    gl.shaderSource(vertexShader, vertShader);
+    gl.compileShader(vertexShader)
+
+    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+      console.error('Vertex Fehler:', gl.getShaderInfoLog(vertexShader));
+    }
+
+    // creates and compiles the fragment shader
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+    gl.shaderSource(fragmentShader, fragShader);
+    gl.compileShader(fragmentShader);
+
+    // attaches the shader to the shader program and links it
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    return program;
+}
+\end{lstlisting}
+
+The result of this code is a simple rectangle drawn onto the screen:
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.15]{images/rectangle_webgl.png}
+  \caption{WebGL Rectangle}\label{fig:WebGL_rectangle}
+\end{figure}
+
+
+\section{WebGPU}
+Another low level and more powerful option compared to WebGL is WebGPU\@. It is a modern API which allows for desktop level performance in a web application. It is achieving that by giving the developer direct access to the GPU which reduces overhead and allows the developer to make better optimizations due to the manipulation of GPU memory. 
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.17]{images/rhi.png}
+  \caption{WebGPU Graphic~\cite{Web:28}}\label{fig:WebGPU_Graphic}
+\end{figure}
+
+WebGPU builds on top of other popular and fast low level graphics APIs like Vulkan and DirectX as seen in figure~\ref{fig:WebGPU_Graphic}. The browser support is yet to be made as advanced as the support for WebGL\@. Since WebGPU gives the user broad access to the GPU's memory, resource management has to be done manually which can lead to memory leaks or other errors which slows down the development process.\ \cite{Web:29}
+
+Unlike WebGL, WebGPU executes shaders in the compute unit. Those shaders are called compute shaders\ \cite{Web:30}. This type of shader is not limited to processing graphics. They run parallel with thousands of threads and can be used for resource heavy tasks including physics simulations and machine learning.\ \cite{Web:31}
+
+\subsubsection{Example}
+
+To be able to draw something on the screen, a canvas needs to be initialised with an id, a width and a height:
+\begin{lstlisting}[language={[AS]HTML}, caption=WebGPU Rectangle 1]
+<canvas #gpuCanvas width="800" height="600"></canvas>
+\end{lstlisting}
+
+This service method checks if WebGPU is supported by the browser. If it is supported, WebGPU tries to get the GPU that will be used for rendering and returns it.
+
+\begin{lstlisting}[language=JavaScript,caption=WebGPU Rectangle 2]
+@Injectable({
+  providedIn: 'root'
+})
+export class WebGpuService {
+  async initialize() {
+    // check if WebGPU is supported
+    if (!navigator.gpu) {
+      throw new Error("WebGPU not supported");
+    }
+
+    // requests the GPU which will be used for rendering
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+      throw new Error("No GPU Adapter found");
+    }
+
+    // saves the device in a variable and returns it
+    const device = await adapter.requestDevice();
+    return {
+      device,
+      format: navigator.gpu.getPreferredCanvasFormat()
+    }
+  }
+}
+\end{lstlisting}
+
+To be able to draw on the screen, a reference to the canvas from the html will be saved in the TypeScript file. After that, the WebGPU service will be injected with the previous mentioned service method.
+
+\begin{lstlisting}[language=JavaScript, caption=WebGPU Rectangle 1]
+export class WebgpuRect {
+    @ViewChild("gpuCanvas") canvasRef!: ElementRef<HTMLCanvasElement>;
+
+    constructor(private webGpu:WebGpuService) {}
+    
+    ...
+}
+\end{lstlisting}
+
+Then the shader need to be defined. In this example the rectangles vertices will be hardcoded into the vertex shader and filled with a colour by the fragment shader.
+
+\begin{lstlisting}[language=JavaScript,caption=WebGPU Rectangle 1]
+shader = `
+    // vertex shader
+    @vertex
+    fn vs_main(@builtin(vertex_index) idx: u32) -> @builtin(position) vec4f {
+      var pos = array<vec2f, 4>(
+        vec2f(-0.5, 0.5),
+        vec2f(0.5, 0.5),
+        vec2f(-0.5, -0.5),
+        vec2f(0.5, -0.5),
+      );
+      return vec4f(pos[idx], 0.0, 1.0);
+    }
+
+    // fragment shader
+    @fragment
+    fn fs_main() -> @location(0) vec4f {
+        return vec4f(1.0, 1.0, 0.0, 1.0);
+    }
+    `
+\end{lstlisting}
+
+After these steps, WebGPU can be initialised, as well as the canvas and the context. Finally, the initialising method of the component calls a custom render method which handels the WebGPU rendering.
+
+\begin{lstlisting}[language=JavaScript,caption=WebGPU Rectangle 1]
+async ngAfterViewInit() {
+    try {
+      // initialising WebGPU, the canvas and the WebGPU context
+      const {device, format} = await this.webGpu.initialize();
+      const canvas = this.canvasRef.nativeElement;
+      const context = canvas.getContext("webgpu");
+
+      if (!context) {
+        throw new Error("WebGPU context not found");
+      }
+
+      // configuration for the context
+      context.configure({
+        device: device,
+        format: format,
+        alphaMode: "premultiplied"
+      })
+
+      // rendering method
+      this.render(device, context, format);
+    } catch (error) {
+      console.error(error);
+    }
+}
+\end{lstlisting}
+
+This is the custom render method. The method creates the rendering pipeline and parses the vertex and fragment shader. Then a command encoder is created which executes a sequence of GPU commands. Finally, the rendering pipeline will be added and the commands will be submitted to the GPU\@.
+
+\begin{lstlisting}[language=JavaScript,caption=WebGPU Rectangle 1]
+render(device: GPUDevice, context: GPUCanvasContext, format:GPUTextureFormat) {
+    // create the rendering pipeline and parse shaders
+    const pipeline = device.createRenderPipeline({
+      layout: 'auto',
+      vertex: {
+        module: device.createShaderModule({code: this.shader}),
+        entryPoint: 'vs_main',
+      },
+      fragment: {
+        module: device.createShaderModule({code: this.shader}),
+        entryPoint: 'fs_main',
+        targets: [{format}],
+      },
+      primitive: {topology: "triangle-strip"},
+    });
+
+    // creates a command encoder
+    const commandEncoder = device.createCommandEncoder();
+    // adds commands to the encoder to be executed by the GPU
+    const passEncoder = commandEncoder.beginRenderPass({
+      colorAttachments: [{
+        view: context.getCurrentTexture().createView(),
+        clearValue: {r: 0.8, g: 0.8, b: 1.0, a: 1.0},
+        loadOp: "clear",
+        storeOp: "store"
+      }]
+    });
+
+    // add the rendering pipeline
+    passEncoder.setPipeline(pipeline);
+    passEncoder.draw(4); // count of vertices to be rendered
+    passEncoder.end();
+
+    // submit commands to the GPU
+    device.queue.submit([commandEncoder.finish()])
+}
+\end{lstlisting}
+
+Result:
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.2]{images/webgpu-rectangle.png}
+  \caption{Three.js Rectangle}\label{fig:WebGPU rectangle}
+\end{figure}
+
+
+\section{Three.js}
+Among the discussed libraries, Three.js is one of the most widely used libraries for drawing 3D in web applications. This library was released and developed by Ricardo Cabello in 2010 with the vision of simplifying the process of creating 3D graphics on websites. It offers many features including interactive models and animations while having good performance and being easy to implement.\ \cite{Web:33}
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.3]{images/threejs.png}
+  \caption{Three.js Website}\label{fig:threejs}
+\end{figure}
+
+It utilizes WebGL for most of the rendering and handles certain features including, scenes, textures and three-dimensional mathematical operations such as transformations which would have needed to be implemented by the developer themselves. This reduces the code that is written by the user by a big margin and ends in results faster.\ \cite{Web:32}
+
+While Three.js builds on WebGL and has a accessible API, it is not always the right option to use. The library suffers from JavaScript overhead due to it's abstraction. Since large parts of the rendering pipeline is not accessible, optimisations are limited which can lead to performance issues in complex scenes.\ \cite{Web:34}
+
+\subsubsection{Example}
+To draw the rectangle on the screen a canvas needs to be created:
+
+\begin{lstlisting}[language={[AS]HTML}, caption=Three.js canvas 1]
+<canvas #threeExample width="800" height="600"></canvas>
+\end{lstlisting}
+
+\begin{lstlisting}[language=JavaScript,caption=Three.js code 1]
+export class ThreejsExample implements AfterViewInit {
+  // get canvas from html file
+  @ViewChild('threeExample')
+  rendererCanvas!: ElementRef<HTMLCanvasElement>;
+  
+  ...
+}
+\end{lstlisting}
+
+There are a few objects that need to be initialised when working with Three.js. The first thing created will be the scene that holds all objects drawn to the scene. To be able to see anything in the scene a camera will be created. Then a WebGL renderer is created which draws everything onto the html canvas: \\
+
+\begin{lstlisting}[language=JavaScript,caption=Three.js code 2]
+// runs code after the angular component was initialized
+ngAfterViewInit() {
+  // creates Three.js scene
+  const scene = new THREE.Scene(); 
+  // creates new Camera with FOV, aspect ratio, near and far
+  const camera = new THREE.PerspectiveCamera(75,800/600, 0.1, 1000);
+  // creates WebGL renderer and sets the canvas to the canvas 
+  // of the html file
+  const renderer = new THREE.WebGLRenderer({
+    canvas: this.rendererCanvas.nativeElement
+  });
+
+  // sets the size of the renderer to 800x600 pixels
+  renderer.setSize(800, 600);
+
+  ...
+}
+\end{lstlisting}
+
+In the last part the geometry for the rectangle will be created and then added to the scene. To make the rectangle not fill the entire screen we position the camera further back and then render the scene: \\
+
+\begin{lstlisting}[language=JavaScript,caption=Three.js code 3]
+ngAfterViewInit() {
+  ...
+
+  // creates a plane object which acts as the rectangle
+  const geometry = new THREE.PlaneGeometry(5, 3.5);
+  // creates a material object with the rectangle's color
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xff0000
+  });
+
+  // combines the geometry of the rectangle with the mesh object
+  // to a single object
+  const rectangle  = new THREE.Mesh(geometry, material);
+  // adds the object to the scene to render
+  scene.add(rectangle);
+
+  // positions the camera further away from the center
+  camera.position.z = 5;
+
+  // renders the frame
+  renderer.render(scene, camera);
+}
+\end{lstlisting}
+
+Result:
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.28]{images/threejsexample.png}
+  \caption{Three.js Rectangle}\label{fig:WebGL_example_02}
+\end{figure}
+
+
+
+
+\section{Babylon.js}
+Babylon.js is a popular and simple Javascript library and engine for 3D web rendering. It was developed by two Microsoft employees, which worked on the library in their free time and released it in 2013 under the Microsoft Public License\ \cite{Web:44}. The aim of the project is to create a simple, fast and powerful API for developing web graphics while offering a wide feature-set.\ \cite{Web:45}
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.28]{images/babylonjs.png}
+  \caption{Babylon.js Website,~\cite{Web:45}}\label{fig:babylonjs_website}
+\end{figure}
+
+A key feature of this library is the support for WebGL 1.0, WebGL 2.0, and WebGPU which gives the engine a broad support for many browsers and devices. This runs without an extra translation layer for optimal performance with both APIs. That also means native shader support for GLSL and WGSL\@. Babylon.js also provides an audio engine, which is using the full suite of features for web-audio\ \cite{Web:45}. 
+
+\subsubsection{Example}
+Like in every other library or API a HTML canvas needs to be defined where the rectangle is going to be rendered in:
+
+\begin{lstlisting}[language={[AS]HTML}, caption=Babylon.js canvas]
+<canvas #babylonCanvas width="800" height="600"></canvas>
+\end{lstlisting}
+
+After creating the canvas in HTML, a reference of the canvas is saved in the Typescript file. After that we need to initialise a Babylon engine and scene:
+
+\begin{lstlisting}[language=JavaScript,caption=Babylon.js code 1]
+export class Babylon implements AfterViewInit {
+  // Canvas reference
+  @ViewChild('babylonCanvas', {static: true})
+  canvas!:ElementRef<HTMLCanvasElement>;
+  // Babylon engine
+  private engine!: Engine;
+  // Babylon scene
+  private scene!: Scene;
+  
+  ...
+}
+\end{lstlisting}
+
+First, the engine and the scene need to be initialised. After that a camera is created and attached to the scene. To be able to see the objects within the scene, a hemispheric light will be added.
+
+\begin{lstlisting}[language=JavaScript,caption=Babylon.js code 2]
+ngAfterViewInit(): void {
+    // initialize engine
+    this.engine = new Engine(this.canvas.nativeElement, true);#
+    // initialize scene
+    this.scene = new Scene(this.engine);
+
+    // creates a camera
+    const camera = new ArcRotateCamera('camera', Math.PI/2, Math.PI/2, 5, Vector3.Zero(), this.scene);
+    camera.attachControl(this.canvas.nativeElement, true);
+    // add light to the scene
+    new HemisphericLight('light', new Vector3(0,1,0), this.scene);
+
+    ...
+}
+\end{lstlisting}
+
+Now that the basic scene and camera was initialised, the rectangle can be added. Since Babylon.js is a 3D engine, the only option to create a rectangle is by creating a thin box and rotate it to look two-dimensional. This code also adds a material with a new colour to it.
+
+\begin{lstlisting}[language=JavaScript,caption=Babylon.js code 3]
+ngAfterViewInit(): void {
+    ...
+    // initialises a rectangle
+    const rectangle = MeshBuilder.CreateBox("rectangle", {
+      width: 3,
+      height: 2,
+      depth: 0.01
+    }, this.scene);
+    // set rectangle material
+    const material = new StandardMaterial("rectMat", this.scene);
+    material.diffuseColor = new Color3(0.2, 0.5, 1);
+    rectangle.material = material;
+
+    ...
+}
+\end{lstlisting}
+
+Finally, the rendering loop is added, which refreshes the drawn picture every frame.
+
+\begin{lstlisting}[language=JavaScript,caption=Babylon.js code 4]
+ngAfterViewInit(): void {
+    ...
+    // rendering loop
+    this.engine.runRenderLoop(() => {
+      this.scene.render();
+    });
+}
+\end{lstlisting}
+
+The final result is the following rectangle:
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.28]{images/babylonexample.png}
+  \caption{Babylon.js Rectangle}\label{fig:babylonjs_example}
+\end{figure}
+
+
+\section{Evaluation of Frameworks}
+
+Every technology mentioned in this chapter has their upsides and downsides depending on the application in which it is used. Therefore, when choosing a framework to work with, some parameters need to be considered. This decision should be based not only on personal preference, but also on the technical limitations of each technology. These parameters include abstraction level, performance, learning curve, and compatibility with browsers and devices. This section will analyze and evaluate each of the previous mentioned technologies on the most important properties.
+
+\subsection{Abstraction level \& Development efforts}
+
+The level of abstraction of a technology directly influences the development effort, which can skyrocket with the use of certain technologies. In the context of frameworks, libraries, and APIs, abstraction describes the process in which complex implementations are hidden and provided through a simpler interface. In case of the technologies covered in the chapter there are two levels:
+
+\begin{itemize}
+    \item \textbf{Low Level}: Technologies on this layer have a thin abstraction layer above the GPU hardware. The developers themselves are responsible for managing the GPU's resources and actions including buffers, the rendering pipeline, and shaders. This level includes WebGL and WebGPU which are low level graphics APIs.
+    \item \textbf{High Level}: These technologies offer a high level of abstraction of the underlying APIs. Instead of the developer handling low level aspects of the code it is handled by the library in the background. This level includes Three.js and Babylon.js which use the low level APIs WebGL and WebGPU\@.
+\end{itemize}
+
+Managing every action of an GPU not only increases the effort when developing applications, but also the size of the codebase. The benefit of having a lower abstraction level is the reduced overhead, which depending on the technology increases performance. Using low level technologies is recommended for high performance applications that benefit from the smaller overhead.
+
+High level technologies like Three.js and Babylon.js introduce a much higher overhead due to their abstraction. This also makes them easier to use and faster to develop with it. Because everything is handled in the background by the libraries, the codebase gets smaller and easier to work with. 
+
+
+
+\subsection{Documentation \& Resources}
+
+The quality of the documentation and the availability of learning resources are critical factors for the learning curve and the maintainability of projects. Extensive documentation provides solutions for complex implementations and reduces the time needed to learn the technology for new developers.
+
+\subsubsection{WebGL}
+As the oldest technology among the four, WebGL offers the most resources available. Beyond the official Khronos documentation, a big amount of community-driven content exists for everyone to use. Resources like WebGL Fundamentals provide a deep insight covering most of WebGL's features and provide example code to learn and modify for individual needs.
+
+\subsubsection{WebGPU}
+Being the newest standard, WebGPU is still lacking resources. Developers often have to rely on the official MDN (Mozilla Developer Network) documentation, which is aimed at graphics programmers with experience rather than beginners in this sector. Compared to WebGL, WebGPU lacks in having a big amount of community-driven tutorials and resources.
+
+\subsubsection{Three.js}
+Three.js, being the most popular technology for 3D in the Web, benefits from its big amount of resources available. Its detailed documentation is accessible on their website with a big amount of examples. These examples contain everything from how to create a simple scene to how to implement advanced features like VR support. There are many courses and tutorial series on the internet for new developers to start with.
+
+\subsubsection{Babylon.js}
+Babylon.js stands out for its playground feature where developers can try Babylon's functionalities in real-time on the website. Compared to Three.js, Babylon's tutorials and resources are smaller than the ones for Three.js. However the technology's official documentation offers a deep dive into the framework with a well documented approach.
+
+\subsection{Compatibility}
+Modern public software often targets as many devices as possible. This is particularly true for portfolios and other commercial websites. The compatibility for older devices is essential for these applications and depending on the technology's age the compatibility may differ.
+
+\subsubsection{WebGL}
+As being the oldest among the discussed, it has a broad support for modern and legacy devices. Especially WebGL 1.0 lends itself well to legacy support for applications. WebGL 2.0 being a bit younger supports less older devices and is made for newer browsers. The upside of WebGL in terms of compatibility is that both versions can be combined to support a vast amount of devices.
+
+\subsubsection{WebGPU}
+WebGPU is made for the new and current state of computer hardware, which means that older devices and browser versions do not support the API\@. This limits the capability for targeting a universal user base as it requires modern hardware.
+
+\subsubsection{Three.js \& Babylon.js}
+Three.js and Babylon.js use both WebGL and WebGPU which leads to maximum performance for new Browsers which support WebGPU and a broad compatibility for older devices. Three.js can automatically switch between these APIs if WebGPU is not supported by the device.\ \cite{Web:66}
+
+\subsection{Performance}
+
+Like compatibility, performance is important so that an application maintains good performance for its target devices. Since every framework mentioned has different abstraction layers and usages, performance may vary between them. To test the performance, a self-made performance test was used to determine certain important parameters which show how the technology performs.
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.58]{images/benchmark-example.png}
+  \caption{Benchmark}\label{fig:benchmark}
+\end{figure}
+
+Figure~\ref{fig:benchmark} shows the design of the performance test. This benchmark creates several instances of the geometry chosen. There is an option available for instancing the geometries, which combines similar objects into a single draw call. This increases performance by a significant margin.
+
+For these benchmarks, 50000 quad instances were created. Quads need more performance since they are made of 2 triangles, which results in 6 vertices and 6 edges that needed to be rendered per frame. Instancing was also disabled to maximize the draw calls that are performed on every frame to test the overhead of each framework. The end result will be the values over the span of 60 seconds.
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[scale=0.6]{images/webgl-benchmark.png}
+  \caption{Benchmark parameters}\label{fig:benchmark_parameters}
+\end{figure}
+
+Figure~\ref{fig:benchmark_parameters} shows the output parameters after 60 seconds, which will determine how efficient these technologies are. The first 3 parameters are related to the frames per second (FPS). These show the average FPS\@. the minimum and maximum achieved FPS, and the lowest FPS of 1\% (higher = better). After that, the average frame time is displayed (lower = better). The rest of the parameters show the amount and geometry of the instances created, and the total vertices in the scene.
+
+It is important to consider that this benchmark tests an exaggerated scenario. In a real application, the code must be optimized to get the best result for the individual usage. This benchmark does not apply any optimisations to enhance performance. 
+All of the frameworks were tested on the following hardware:
+
+\begin{itemize}
+    \item CPU: AMD Ryzen 7 5800X 8-Core
+    \item GPU: NVIDIA GeForce RTX 4060 Ti
+    \item RAM: 32GB DDR4 3200MHz
+    \item Browser: Brave 1.88.134 (Chromium 146.0.7680.153)
+\end{itemize}
+
+\begin{table}[ht!]
+  \centering
+  \begin{tabular}{c|c|c|c|c} % chktex 44
+  \hline % chktex 44
+  Parameters & WebGL & WebGPU & Three.js & Babylon.js \\
+  \hline % chktex 44
+  Avg FPS & 66 FPS & 854 FPS & 9 FPS & 65 FPS \\
+  Min/Max FPS& 45/78 FPS & 709/1004 FPS & 6/10 FPS & 36/81 FPS \\
+  1\% Low & 45 FPS & 709 FPS & 6 FPS & 36 FPS \\
+  Avg Frame Time & 15.360ms & 1.148ms & 109.388ms & 16.083ms \\
+  \hline % chktex 44
+  \end{tabular}
+  \caption{Benchmark results}
+\end{table}
+
+According to the benchmark, when it comes to average FPS, WebGPU outperformed every other technology by a factor of at least 12 times. This shows that WebGPU has a significant advantage, since it is optimized to be used with modern hardware. WebGL and Babylon.js perform identically in this scenario with Babylon.js being worse at the minimum FPS but better at the maximum FPS\@. Three.js got the worst result with being at least 6 times slower than the others. Note that these results are without any optimisations.
+
+
+\subsection{Evaluation}
+
+To choose a right technology to use in a project, these factors need to be weighted by their importance and criteria must be set. Every criteria is ranked by a number from 1 to 5.
+
+\begin{table}[ht!]
+  \centering
+  \begin{tabular}{c|c|c|c|c|c} % chktex 44
+  \hline % chktex 44
+  Criteria & 1 & 2 & 3 & 4 & 5 \\
+  \hline % chktex 44
+  Complexity & very high & high & mid & low & very low \\
+  Documentation/Resources & very bad & bad & okay & good & excellent \\
+  Compatibility & very bad & bad & okay & good & very good \\
+  Performance & very bad & bad & okay & good & very good \\
+  \hline % chktex 44
+  \end{tabular}
+  \caption{Criteria}
+\end{table}
+
+The higher the number the better the technology will be ranked. After setting the criteria, they need to be weighted depending on how important they are for the project. In the final calculation the weights will be multiplied with the ranked number and then summed up. 
+
+\begin{table}[ht!]
+  \centering
+  \begin{tabular}{c|c} % chktex 44
+  \hline % chktex 44
+  Criteria & Weights \\
+  \hline % chktex 44
+  Complexity & 20\% \\
+  Documentation/Resources & 30\% \\
+  Compatibility & 20\% \\
+  Performance & 30\% \\
+  \hline % chktex 44
+  \end{tabular}
+  \caption{Weights}
+\end{table}
+
+The goal for Airscout was to keep the complexity low while maintaining a performant 3D view. Good documentation and resources are crucial for the success of the tasks implementation which is why it was ranked higher than other criteria.
+
+\begin{table}[ht!]
+    \centering
+    \begin{tabular}{c|c|c|c|c|c} % chktex 44
+    \hline % chktex 44
+    Criteria & Weights & WebGL & WebGPU & Three.js & Babylon \\
+    \hline % chktex 44
+    Complexity & 20\% & 2 & 1 & 5 & 4 \\
+    Documentation/Resources & 30\% & 5 & 2 & 5 & 3 \\
+    Compatibility & 20\% & 4 & 2 & 5 & 5 \\
+    Performance & 30\% & 3 & 5 & 1 & 3 \\
+    \hline % chktex 44
+    Total &  & 3.6 & 2.7 & 3.8 & 3.6 \\
+    \hline % chktex 44
+    \end{tabular}
+    \caption{Scoring Method}
+\end{table}
+
+When it comes to complexity, WebGPU was ranked being the most complex framework among the four with WebGL following close behind. This is because of the low level abstraction and the control these frameworks have. For documentation Three.js and WebGL are tied, since they both have a vast amount of community-driven resources. WebGPU being newer, does not have many resources yet. 
+
+The frameworks with the best compatibility are Three.js and Babylon.js, because they can switch between WebGL and WebGPU depending on what the device and browser supports. WebGL follows close behind, with it having two versions with a different level of compatibility. Although Three.js is very good in the criteria mentioned above, it performs the worst when it comes to performance. Unlike Three.js, WebGPU performs the best of them all. WebGL and Babylon.js are tied with identical results.
+
+For the project, Three.js was used, since prior knowledge was available and it is easier to get good results faster.

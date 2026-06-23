@@ -1,0 +1,293 @@
+% Vorlage Version 2.0+EN aus 2026
+% Doppelseitges Layout
+\documentclass[a4paper, 12pt, twoside, open=right, chapterprefix=true, numbers=noenddot, BCOR=20mm, DIV=18]{scrreprt} 
+% Einseitiges Layout, nicht getestet aber für den Fall
+% \documentclass[a4paper, 12pt, chapterprefix=true, numbers=noenddot, BCOR=20mm, DIV=10]{scrreprt} 
+
+\raggedbottom{} % Erlaubt unterschiedlich hohe Seiten
+\usepackage{longtable} % Lange Tabellen über mehrere Seiten
+\usepackage{enumitem} % Wird von der Vorlage verwendet, um die Abstände in Listen zu ändern
+\usepackage[table]{xcolor} % Farbige Tabellen
+\usepackage[utf8]{inputenc} % UTF-8 Encoding für .tex-Dateien. Danke an Overleaf, dass ihr das automatisch macht.
+\usepackage{helvet} % Helvetica als Schriftart
+\usepackage{courier} % Courier als Schriftart für Listings
+\usepackage{scrlayer-scrpage} % Layout-Engine für Kopf- und Fußzeilen
+\usepackage{listings} % Listings
+\usepackage{color} % Oha Farben
+\usepackage{setspace} % Zeilenabstand einstellen
+\usepackage{graphicx} % Grafiken einbinden
+\usepackage{rotating} % Drehen von Objekten, z.B. Bildern
+\usepackage{xurl} % Für URLs mit besseren Zeilenumbrüchen
+\usepackage{csquotes} % Für korrekte Anführungszeichen
+\usepackage[hypertexnames=false]{hyperref} % Links im PDF
+\usepackage{float} % Für die Platzierung von Bildern und Tabellen
+\usepackage{pdfpages} % PDFs einbinden, wird für Dokumentation gebraucht
+\usepackage[font={scriptsize}]{caption} % Bildunterschriften
+\usepackage{booktabs} % Trennlinien in Tabellen
+\usepackage{tabularx} % Bessere Tabellen
+\usepackage{amsmath} % Mathe
+\usepackage{amsfonts} % Mathe
+\usepackage[backend=biber,style=alphabetic]{biblatex} % Quellenangaben
+
+\addbibresource{external-sources.bib}
+
+%----------------------------------------------------------------------------------
+% Listings 
+%----------------------------------------------------------------------------------
+
+% Definiert den \source Befehl für Einbinden von Dateien als Listings.
+\def\source#1#2#3{
+  \lstinputlisting[language=#1,caption=#2]{#3} 
+}
+
+% Beispiel: \source{java}{\texttt{beans.UserBean.java}}{sources/jsf/user/UserBean.java}
+
+%Listings Language and Style Definitions
+\input{listings-config.tex}
+
+%Eigene Kommandos
+\newcommand{\webref}[1]{\href{#1}{\url{#1}}}
+\newcommand{\cdline}[1]{\textbf{Line #1}}
+\newcommand{\cdlines}[1]{\textbf{Lines #1}}
+\newcommand{\boldtitle}[1]{\large {\textbf #1}\\[0.5em]}
+
+%-------------------------------------------------------------------------------
+% Formatierung
+%-------------------------------------------------------------------------------
+
+% Gepunktete Linien im Inhaltsverzeichnis
+\makeatletter
+\renewcommand*\l@section{\@dottedtocline{1}{3.8em}{4em}}
+\renewcommand*\l@subsection{\@dottedtocline{2}{3.8em}{4em}}
+\renewcommand*\l@subsubsection{\@dottedtocline{3}{3.8em}{4em}}
+\renewcommand*\l@figure{\@dottedtocline{1}{2.8em}{3em}}
+\renewcommand*\l@lstlisting{\@dottedtocline{1}{2.8em}{3em}}
+\makeatother
+
+% Längen- und Absatzeinstellungen
+\parindent=0pt    %Kein Einrücken der ersten Zeile eines Absatzes
+\parskip=10pt     %12pt Abstand zwischen 2 Absätzen
+\singlespacing{}  %Einfacher Zeilenabstand
+
+% Erlaubt aggressivere Umbrüche in langen URLs, vor allem im Literaturverzeichnis.
+\Urlmuskip=0mu plus 2mu\relax
+\setcounter{biburllcpenalty}{7000}
+\setcounter{biburlucpenalty}{7000}
+\setcounter{biburlnumpenalty}{7000}
+\appto{\bibsetup}{\raggedright\sloppy}
+
+% Abstände vor und Nach Kapitelüberschriften
+\RedeclareSectionCommand[
+  beforeskip=2.7cm, 
+  afterskip=1.4cm
+]{chapter}
+
+% Seitenränder
+\areaset[2cm]{\textwidth}{\textheight}
+\addtolength{\topmargin}{3cm}
+\addtolength{\textheight}{-2.7cm}
+\setlength{\footskip}{0.5cm}
+
+% Abstände vor und nach Aufzählungen
+\setlist{topsep=10pt}
+
+%--------------------------------------------------------------------------
+% Beginn Dokument
+%--------------------------------------------------------------------------
+
+\begin{document}
+% Schriftarten setzen
+\sffamily
+\addtokomafont{section}{\sffamily}
+\addtokomafont{chapter}{\sffamily}
+\addtokomafont{subsection}{\sffamily}
+
+% Titelseite
+\input{textparts/titel}
+\cleardoublepage{}
+
+%-----------------------------------------------------------------
+% Vorwort
+%-----------------------------------------------------------------
+\pagestyle{plain} % "Plain" Seitenstil für Vorwort, Inhaltsverzeichnis und Anhang
+\ofoot*{} % Nichts außen im Footer
+\cfoot*{\rmfamily\emreset\thepage} % Seitenzahl in der Mitte des Footers
+\pagenumbering{roman} % Römische Nummerierung vor der eigentlichen Diplomarbeit
+\setcounter{page}{1} % Bei 1 mit Nummerierung beginnen
+
+\phantomsection{} % Damit Hyperref die Seitenzahl korrekt verlinkt, vor jedem \addcontentsline
+\addcontentsline{toc}{chapter}{Foreword} % Manuell einen Eintrag ins Inhaltsverzeichnis einfügen
+
+\phantomsection{}
+\addcontentsline{toc}{section}{Erklärung}
+\input{textparts/erklaerung}
+\cleardoublepage{} % Stellt sicher, dass die nächste Seite rechts ist
+
+\phantomsection{}
+\addcontentsline{toc}{section}{Diplomandenvorstellung}
+\input{textparts/diplomandenvorstellung}
+
+\phantomsection{}
+\addcontentsline{toc}{section}{Acknowledgements}
+\input{textparts/danksagungen}
+\cleardoublepage{}
+
+\phantomsection{}
+\addcontentsline{toc}{section}{Abstract}
+\input{textparts/abstract}
+\cleardoublepage{}
+
+% INhaltverzeichnis
+\renewcommand{\contentsname}{Table of Contents}
+\renewcommand{\chaptername}{Chapter}
+\phantomsection{}
+\addcontentsline{toc}{chapter}{Table of Contents}
+\tableofcontents
+\cleardoublepage{}
+
+%-----------------------------------------------------------------
+% Hauptteil
+%-----------------------------------------------------------------
+
+% Neues Seitenlayout
+\KOMAoptions{DIV=18, headinclude=true, footinclude=false, headsepline=.4pt}
+\areaset[2cm]{\textwidth}{\textheight}
+\addtolength{\topmargin}{1.5cm}
+\addtolength{\textheight}{-2.3cm}
+\pagestyle{scrheadings}
+\cfoot*{}
+
+% Seiten mit Kapitelüberschriften leer
+\renewcommand*{\chapterpagestyle}{empty}
+
+% Footer leer
+\lefoot{}
+\lofoot{}
+\refoot{}
+\rofoot{}
+
+% Kopfzeilen
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\renewcommand{\chaptermark}[1]{\markright{\thechapter\ #1}}
+% Seitenzahlen außen, Kapitelüberschrift innen
+\lehead{\rmfamily\thepage}
+\rehead{\rmfamily\rightmark}
+\lohead{\rmfamily\rightmark}
+\rohead{\rmfamily\thepage}
+
+% Seiten auf arabische Zahlen umstellen und bei 1 beginnen
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+%--------------------------------------------------------------------------
+% Kapitel einfügen
+%--------------------------------------------------------------------------
+
+\include{textparts/objective.tex}
+% lucas diploma
+\part[Intelligent sensor data acquisition and methods for data preparation for reuse]
+{Intelligent sensor data acquisition and methods for data preparation for reuse\\\large by Luca Reisenbichler}
+\include{textparts/luca/lr_2_sensors}
+\include{textparts/luca/lr_3_data-sources}
+\include{textparts/luca/lr_4_data-measuring}
+\include{textparts/luca/lr_5_problems}
+\include{textparts/luca/lr_6_preperation}
+\include{textparts/luca/lr_7_implementation}
+\include{textparts/luca/lr_8_usecase}
+\include{textparts/luca/lr_9_evaluation}
+\include{textparts/luca/lr_10_context}
+% benjamins diploma
+\part[Evaluation and optimization of time series databases]
+{Evaluation and optimization of time series databases\\\large by Benjamin Friedl}
+\include{textparts/benjamin/bf_0_introduction}
+\include{textparts/benjamin/bf_1_overview.tex}
+\include{textparts/benjamin/bf_2_performance_improvement}
+\include{textparts/benjamin/bf_3_ts_cloud}
+\include{textparts/benjamin/bf_5_performance_measurement}
+\include{textparts/benjamin/bf_6_benchmarking}
+\include{textparts/benjamin/bf_7_analytics}
+\include{textparts/benjamin/bf_8_project-context}
+% christians diploma
+\part[Theory of Weighted Value Distribution Maps including the comparison of Spatiotemporal Smoothing Methods and a practical implementation using WebGL]
+{Theory of Weighted Value Distribution Maps including the comparison of Spatiotemporal Smoothing Methods and a practical implementation using WebGL\\\large by Christian Patzl}
+\include{textparts/christian/cp_1_introduction}
+\include{textparts/christian/cp_2_theory}
+\include{textparts/christian/cp_3_implementation}
+\include{textparts/christian/cp_4_project-context}
+%tobias diploma
+\part[3D representation of map services]
+{3D representation of map services\\\large by Tobias Eisinger}
+\include{textparts/tobias/te_2_math_fundamentals}
+\include{textparts/tobias/te_3_geospatial}
+\include{textparts/tobias/te_4_frameworks}
+\include{textparts/tobias/te_5_project}
+% valentins diploma
+\part[A comparative study of modern mobile application development frameworks]
+{A comparative study of modern mobile application development frameworks\\\large by Valentin Hacker}
+\include{textparts/valentin/vh_why_frameworks_are_needed}
+\include{textparts/valentin/vh_frameworks_introduction}
+\include{textparts/valentin/vh_dx_comparison}
+\include{textparts/valentin/vh_performance_comparison}
+\include{textparts/valentin/vh_maturity}
+\include{textparts/valentin/vh_security}
+\include{textparts/valentin/vh_integration}
+
+\input{textparts/conclusion}
+
+%--------------------------------------------------------------------------
+% Anhang
+%--------------------------------------------------------------------------
+
+\phantomsection{}
+\addcontentsline{toc}{chapter}{Appendix}
+
+\markright{List of Figures}
+\phantomsection{}
+\addcontentsline{toc}{section}{List of Figures}
+\listoffigures
+\cleardoublepage{}
+
+\markright{List of Tables}
+\phantomsection{}
+\addcontentsline{toc}{section}{List of Tables}
+\listoftables
+\cleardoublepage{}
+
+\markright{List of Listings}
+\phantomsection{}
+\addcontentsline{toc}{section}{List of Listings}
+\lstlistoflistings{}
+\cleardoublepage{}
+
+\phantomsection{}
+\printbibliography[heading=bibintoc, title={Bibliography}]
+\clearpage{}
+
+\markright{LLM Conversations}
+\phantomsection{}
+\addcontentsline{toc}{section}{Directory of LLM conversations}
+\input{textparts/llms}
+\clearpage{}
+
+\begingroup
+\enlargethispage{5cm}
+\markright{Chapter Assignment}
+\input{textparts/chapter_assignment}
+\cleardoublepage{}
+\endgroup
+
+\markright{Documentation}
+\input{textparts/documentation}
+\cleardoublepage{}
+
+\markright{Time Tracking}
+\input{textparts/luca/zeiterfassung.tex}
+\newpage{}
+\input{textparts/benjamin/zeiterfassung.tex}
+\newpage{}
+\input{textparts/christian/zeiterfassung.tex}
+\newpage{}
+\input{textparts/tobias/zeiterfassung.tex}
+\newpage{}
+\input{textparts/valentin/zeiterfassung.tex}
+\end{document}

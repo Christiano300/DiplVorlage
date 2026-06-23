@@ -1,0 +1,131 @@
+\chapter{Problems and Troubleshooting}
+The subsequent chapters provide an explanation of common problems that are encountered when working with sensors. Methods for detecting these problems will also be discussed.
+\section{Gimbal Lock}\label{title:gimbal}
+\begin{quote}
+    Gimbal lock is a critical condition in mechanics involving a gimbal-mounted system. In this state, two of the three possible axes of rotation become aligned, causing the system to lose one degree of freedom.
+\end{quote}
+\noindent\cite{LRWeb:18}
+
+A gimbal is a ring around an object that can rotate around one axis. The gimbals can be stacked on top of each other, allowing full rotation in a 3-dimensional space. This is the same concept as the Gyroscope~\ref{title:gyroscope}.\\
+\noindent\cite{LRWeb:17}
+
+\newpage
+
+A Gimbal Lock can look like figure~\ref{fig:gimbal-lock}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/Gimbal-Lock.png}
+    \caption{Object loses a degree of freedom, causing a Gimbal Lock}\label{fig:gimbal-lock}
+\end{figure}
+\noindent\cite{LRWeb:26}
+
+The problem occurs when two of the three gimbals end up parallel, causing the object to lose one axis, it can rotate around. When the middle gimbal rotates to a critical angle (for example $90^\circ$), the inner and outer gimbal axes become aligned. At this point both rotations act around the same physical axis. Because two rotations now produce the same motion, one independent rotational degree of freedom is lost. As a result, the system can no longer represent arbitrary orientations using the three Euler angles~\ref{fig:gimbal-lock-path}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Gimbal-Lock-Path.jpg}
+    \caption{Gimbal Lock Rotation Path}\label{fig:gimbal-lock-path}
+\end{figure}
+\noindent\cite{LRWeb:65}
+
+This can lead to faulty acceleration- and gyroscope-data. There are some ways to avoid a Gimbal Lock:
+\begin{itemize}
+    \item Using a fourth gimbal, driven by a motor, to keep the roll and yaw gimbal axes separated.
+    \item Detect Gimbal Lock and rotate one or more gimbals to an arbitrary position to reset the device.
+    \item Completely avoid gimbals at all by using Quaternions instead of Euler Angles.
+\end{itemize}
+Quaternions avoid gimbal lock because they represent orientations as a single rotation around an arbitrary axis instead of a sequence of rotations around fixed coordinate axes. Since no intermediate axes exist that can align with each other, the representation does not contain the singular configurations that cause gimbal lock in Euler-angle systems.
+
+\noindent\cite{LRWeb:17}
+\section{Sensor-Drift}
+\begin{quote}
+    In the natural sciences and engineering, drift refers to a relatively slow change in a characteristic or property of a system, device, or component for which no desired cause is known and no known cause is intended.
+\end{quote}
+\noindent\cite{LRWeb:12}
+
+Drift can lead to more and more inaccurate data over time and is very hard to detect.\\\\
+{\large \textbf{Reasons for drift}}\label{title:drift}
+\begin{itemize}
+    \item Environment
+    \begin{itemize}
+        \item Wind
+        \item Pressure
+        \item Temperature
+    \end{itemize}
+    \item Broken components or cheap material
+    \item Age of hardware
+    \item Lack of calibration or maintenance
+    \item Interference from other systems
+\end{itemize}
+
+\noindent\cite{LRWeb:13}\\
+
+\section{Noise in Measurement-Values}\label{title:noise}
+Sensor Noise is the random variation of the output from the sensor, even though the input and environment stay the same. The more the output fluctuates, the worse the quality of unprocessed sensor-data. Sensor Noise can sometimes be confused with Sensor Drift, when comparing the two, the following differences can be spotted:~\ref{tab:sensor-fault-comparison}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Characteristic} & \textbf{Sensor Drift} & \textbf{Sensor Noise}\\
+\midrule
+Random                      & No      & Yes             \\
+Frequency                   & Low     & High            \\
+Correction Effort           & High    & Low             \\
+
+\bottomrule
+\end{tabular}
+\caption{Comparing Sensor Drift to Sensor Noise}\label{tab:sensor-fault-comparison}
+\end{table}
+
+\noindent\cite{LRWeb:19}
+
+\section{Outlier Values}\label{title:outlier}
+Outlier sensor data are data that seem unreasonably far apart from past or future sensor data. The definition as to whether a value is an outlier is mostly up to the application that handles statistical/time-series data. Most common rules to recognize outliers are:
+
+\begin{itemize}
+  \item \textbf{IQR\footnote{Interquartile Range Rule} Rule:}
+  \begin{enumerate}
+    \item Sort all values in ascending order.
+    \item Determine the first quartile ($Q_1$), third quartile ($Q_3$), and the median.
+    \item Compute the interquartile range:
+          \[
+          IQR = Q_3 - Q_1
+          \]
+    \item Compute the upper bound:
+          \[
+          B_u = Q_3 + 1.5 \times IQR
+          \]
+    \item Compute the lower bound:
+          \[
+          B_b = Q_1 - 1.5 \times IQR
+          \]
+    \item Any value greater than $B_u$ or less than $B_b$ is considered an outlier.
+  \end{enumerate}
+  \item Z-Score Method:\label{title:zscore}
+  \begin{enumerate}
+      \item Calculate the mean ($\mu$) and standard deviation ($\sigma$)
+      \item To define whether a point is an outlier, the Z-Score needs to be computed with this formula:
+            \[
+            z = \frac{x - \mu}{\sigma}
+            \]
+      \item Now we can define whether $z$ is an outlier with the following rules:
+            \[
+                z \text{ is } 
+                \begin{cases}
+                    \text{an outlier}, & |z| > 3 \\
+                    \text{not an outlier}, & |z| < 3
+                \end{cases}
+                \]
+    \end{enumerate}
+\end{itemize}
+\noindent\cite{LRWeb:20, LRWeb:21}
+
+If you would want to find outliers in recorded sensor data, you would typically visualize the observations with a box-plot. In there outliers can be spotted very easily, as they are just shown as dots~\ref{fig:outliers}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/outliers.png}
+    \caption{Box-plot with outliers (source: own work)}\label{fig:outliers}
+\end{figure}

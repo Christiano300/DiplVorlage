@@ -13,14 +13,14 @@
 \definecolor{orange}{RGB}{240, 105, 12}
 \definecolor{green}{RGB}{156, 206, 43}
 
-\definecolor{onelt@fg}        {HTML}{383A42}   % default text
+\definecolor{onelt@fg}        {HTML}{27282D}   % default text
 \definecolor{onelt@red}       {HTML}{E45649}   % keywords / return
 \definecolor{onelt@orange}    {HTML}{B76B01}   % numbers / constants
 \definecolor{onelt@green}     {HTML}{50A14F}   % strings
 \definecolor{onelt@cyan}      {HTML}{0184BC}   % types / classes
 \definecolor{onelt@blue}      {HTML}{4078F2}   % functions / composables
 \definecolor{onelt@purple}    {HTML}{A626A4}   % modifier keywords
-\definecolor{onelt@comment}   {HTML}{909090}   % comments (italic)
+\definecolor{onelt@comment}   {HTML}{808080}   % comments (italic)
 \definecolor{onelt@lineno}    {HTML}{505050}   % line numbers
 \definecolor{onelt@frame}     {HTML}{7F7F7F}   % frame / rule
 
@@ -59,6 +59,7 @@
 %  [4]  KMP Compose / SQL Functions       → blue   (bold)
 
 \lstdefinelanguage{GLSL}{
+  % Keywords with # need and other special characters need to be put here
   otherkeywords={\#if,\#else,\#endif,\#define,\#version},
   morekeywords=[1]{\#if,\#else,\#endif,\#define,\#version,for,if,else,return},
   morekeywords=[2]{const,float,void,vec,vec2,vec3,vec4,int,sampler2D,uint,in,out,uniform,varying,discard},
@@ -85,19 +86,20 @@
   morecomment=[s]{/*}{*/}
 }
 
-\lstdefinelanguage[AS]{HTML}{
+\lstdefinelanguage[HTL]{HTML}{
   language=HTML,
   morekeywords=[2]{canvas},
 }
 
-\lstdefinelanguage[AS]{Python}{
+\lstdefinelanguage[HTL]{Python}{
   language=Python,
   morekeywords=[3]{gpd,rasterio,np,scipy,matplotlib,plt,pykrige}
 }
 
-\lstdefinelanguage[AS]{Java}{
+\lstdefinelanguage[HTL]{Java}{
   language=Java,
-  morekeywords=[3]{List,Map,HashMap,Function,Float,Double,Math}
+  morekeywords=[1]{var},
+  morekeywords=[3]{List,Map,HashMap,Function,Float,Double,String,Math}
 }
 
 \lstdefinelanguage{PGTSSQL}{

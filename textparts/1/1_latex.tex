@@ -1,0 +1,95 @@
+\chapter{Kurzes \LaTeX{} Tutorial}\label{chap:1-intro}
+
+Korrekte aussprache La-Tech. Wenn ihr Probleme habt, versucht Google, das TeX StackExchange ist zu empfehlen. KI ist in LaTeX wirklich nicht gut, stand 2026 (und in meiner Erfahrung) sind gut die Hälfte der Antworten halluziniert.
+
+Ein Dokument ist unterteilt in Teile (Parts, hier für jede Person einen), Kapitel wie hier und
+
+Eine sehr gute Quelle für \LaTeX{} ist die \href{https://www.overleaf.com/learn/latex}{Overleaf Dokumentation}.
+
+\section{Sections}
+
+\subsection{Subsections}
+
+und
+
+\subsubsection{Subsubsections}
+
+wie in markdown
+absätze sind OK
+
+Nur eine Leerzeile macht einen neuen Absatz
+
+\section{Formatierung}
+
+\textbf{Fett}, \textit{Kursiv}, \underline{Unterstrichen}, \texttt{Monospace} und \textsc{Small Caps}
+
+Für Eigennamen, vor allem Dinger beim Programmieren (Paketnamen, Klassen, Funktionen, Variablen) ist \verb|\verb| zu empfehlen, das verwendet || statt Klammern \{\} und man kann auch \verb|\| verwenden.
+
+\section{Listen}
+
+Zwei Arten: unnummeriert mit \verb|itemize| und nummeriert mit \verb|enumerate|. Sie können auch verschachtelt werden, siehe unten.
+
+\begin{itemize}
+    \item Item 1
+    \begin{itemize}
+        \item Subitem 1
+        \item Subitem 2
+    \end{itemize}
+    \item Item 2
+    \item Item 3
+\end{itemize}
+
+\begin{enumerate}
+    \item Item 1
+    \begin{enumerate}
+        \item Subitem 1
+        \item Subitem 2
+    \end{enumerate}
+    \item Item 2
+    \item Item 3
+\end{enumerate}
+
+\section{Code}
+
+Diese Vorlage verwendet das \verb|listings| Paket, das Codeblöcke (halbwegs) schön formatiert. Wenn ihr geistig gesund bleiben wollt, bleibt dabei. \@\verb|listings| unterstützt nicht viele (moderne) Sprachen, und auch die oft nicht besonders gut. Deswegen sind in dieser Vorlage neue Sprachen und manche aktualisiert, die neue Version heißt dann z.B. [HTL]Java. Die gesamte Konfiguration ist in \verb|listings-config.tex|, mehr Info dort.
+
+% Verwendet [HTL]Java
+\begin{lstlisting}[language={[HTL]Java}, caption={Beispielcode in Java}]
+public class HelloWorld {
+    public static void main(String[] args) {
+        var a = Math.random();
+        // Kommentar
+        System.out.println("Hello, World!");
+    }
+}
+\end{lstlisting}
+
+% listings kann kein GLSL, das wurde neu hinzugefügt und hat deswegen kein [HTL] Präfix
+\begin{lstlisting}[language=GLSL, caption={Beispielcode in GLSL}]
+#version 330
+
+uniform float uTime;
+out vec4 fragColor;
+
+void main() {
+    vec3 color = vec3(sin(uTime), 0.0, 0.0);
+    fragColor = vec4(color, 1.0);
+}
+\end{lstlisting}
+
+\section{Bilder}
+
+Für \LaTeX{} Code siehe unten eine Sache: Floating specifiers, geben an wo das Bild hin soll, das ist in den eckigen Klammern nach dem \verb|\begin{figure}|.
+\begin{itemize}
+    \item Wenn man das komplett weglässt, entscheidet \LaTeX{} selbst, wo das Bild hinkommt. 
+    \item \verb|[ht]| (war früher [h]) heißt, er versucht das Bild einzufügen wo es im Code steht, wenn das nicht geht halt woanders.
+    \item \verb|[H]| das Bild wird genau dort eingefügt, wo es im Code steht. Das kann zu ungewollten Seitenumbrüchen und halbleeren Seiten führen, eure Entscheidung.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{example-image}
+    \caption{Beispielbild}\label{fig:example}
+\end{figure}
+
+Besonders wenn man das Bild nicht mit \verb|[H]| ist es sinnvoll dem Bild ein \verb|\label| zu geben und es mit einer Referenz zu erwähnen, wie in Abbildung~\ref{fig:example}. Es gibt auch \verb|\autoref| \autoref{fig:example}, aber ich weiß nicht wie gut das auf Deutsch funktioniert

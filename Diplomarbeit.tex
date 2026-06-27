@@ -29,18 +29,10 @@
 \usepackage{amsfonts} % Mathe
 \usepackage[backend=biber,style=alphabetic]{biblatex} % Quellenangaben
 
-\addbibresource{external-sources.bib}
-
-%----------------------------------------------------------------------------------
-% Listings 
-%----------------------------------------------------------------------------------
-
-% Definiert den \source Befehl für Einbinden von Dateien als Listings.
-\def\source#1#2#3{
-  \lstinputlisting[language=#1,caption=#2]{#3} 
-}
-
-% Beispiel: \source{java}{\texttt{beans.UserBean.java}}{sources/jsf/user/UserBean.java}
+% Quellen einbinden
+\addbibresource{textparts/0/sources.bib} % Quelle für Tutorial, LÖSCHEN WENN NICHT BENÖTIGT
+\addbibresource{textparts/1/sources.bib}
+\addbibresource{textparts/2/sources.bib}
 
 %Listings Language and Style Definitions
 \input{listings-config.tex}
@@ -76,17 +68,17 @@
 \setcounter{biburlnumpenalty}{7000}
 \appto{\bibsetup}{\raggedright\sloppy}
 
-% Abstände vor und Nach Kapitelüberschriften
+% Abstände vor und nach Kapitelüberschriften
 \RedeclareSectionCommand[
   beforeskip=2.7cm, 
   afterskip=1.4cm
 ]{chapter}
 
 % Seitenränder
-\areaset[2cm]{\textwidth}{\textheight}
-\addtolength{\topmargin}{3cm}
-\addtolength{\textheight}{-2.7cm}
-\setlength{\footskip}{0.5cm}
+\areaset[2cm]{\textwidth}{\textheight} % kp, glaub ermöglicht bearbeiten von Seitenrändern
+\addtolength{\topmargin}{3cm} % Mehr Abstand oben
+\addtolength{\textheight}{-2.7cm} % dafür kleinere Seitenhöhe
+\setlength{\footskip}{0.5cm} % Footer näher am Content
 
 % Abstände vor und nach Aufzählungen
 \setlist{topsep=10pt}
@@ -137,7 +129,7 @@
 \input{textparts/abstract}
 \cleardoublepage{}
 
-% INhaltverzeichnis
+% Inhaltverzeichnis
 \renewcommand{\contentsname}{Table of Contents}
 \renewcommand{\chaptername}{Chapter}
 \phantomsection{}
@@ -184,10 +176,14 @@
 %--------------------------------------------------------------------------
 
 \include{textparts/objective.tex}
+% START: Tutorial + Erklärung, LÖSCHEN WENN NICHT BENÖTIGT
+\part{Tutorial + Erklärung}
+\include{textparts/0/1_latex}
+% END: Tutorial + Erklärung, LÖSCHEN WENN NICHT BENÖTIGT
 % 1's diploma thesis
 \part[First thesis title]
 {First thesis title\\\large by Person 1}
-\include{textparts/1/1_latex}
+\include{textparts/1/1_introduction}
 % 2's diploma thesis
 \part[Second thesis title]
 {Second thesis title\\\large by Person 2}

@@ -1,0 +1,166 @@
+\chapter{Kurzes \LaTeX{} Tutorial}
+
+Korrekte aussprache La-Tech. Wenn ihr Probleme habt, versucht Google, das TeX StackExchange ist zu empfehlen. KI ist in LaTeX wirklich nicht gut, stand 2026 (und in meiner Erfahrung) sind gut die Hälfte der Antworten halluziniert.
+
+Eine sehr gute Quelle für \LaTeX{} ist die \href{https://www.overleaf.com/learn/latex}{Overleaf Dokumentation}.
+
+Ein Dokument ist unterteilt in Teile (Parts, hier für jede Person einen), Kapitel wie hier und
+
+\section{Sections}
+
+\subsection{Subsections}
+
+und
+
+\subsubsection{Subsubsections}
+
+wie in markdown
+absätze sind OK
+
+Nur eine Leerzeile macht einen neuen Absatz
+
+\section{Formatierung}
+
+\textbf{Fett}, \textit{Kursiv}, \underline{Unterstrichen}, \texttt{Monospace} und \textsc{Small Caps}
+
+Für Eigennamen, vor allem Dinger beim Programmieren (Paketnamen, Klassen, Funktionen, Variablen) ist \verb|\verb| zu empfehlen, das verwendet \textbar\textbar{} statt Klammern \{\} und man kann auch \verb|\| verwenden.
+
+\section{Listen}
+
+Zwei Arten: unnummeriert mit \verb|itemize| und nummeriert mit \verb|enumerate|. Sie können auch verschachtelt werden, siehe unten.
+
+\begin{itemize}
+    \item Item 1
+    \begin{itemize}
+        \item Subitem 1
+        \item Subitem 2
+    \end{itemize}
+    \item Item 2
+    \item Item 3
+\end{itemize}
+
+\begin{enumerate}
+    \item Item 1
+    \begin{enumerate}
+        \item Subitem 1
+        \item Subitem 2
+    \end{enumerate}
+    \item Item 2
+    \item Item 3
+\end{enumerate}
+
+\section{Code}
+
+Diese Vorlage verwendet das \verb|listings| Paket, das Codeblöcke (halbwegs) schön formatiert. Wenn ihr geistig gesund bleiben wollt, bleibt dabei. \@\verb|listings| unterstützt nicht viele (moderne) Sprachen, und auch die oft nicht besonders gut. Deswegen sind in dieser Vorlage neue Sprachen ergänzt und manche aktualisiert, die neue Version heißt dann z.B. [HTL]Java. Die gesamte Konfiguration ist in \verb|listings-config.tex|, mehr Info dort.
+
+% Verwendet [HTL]Java, die aktualisierte Version von Java, die in der Vorlage definiert ist, hat besseres Syntax Highlighting. bei aktualisierten Sprachen {} nicht vergessen
+\begin{lstlisting}[language={[HTL]Java}, caption={Beispielcode in Java}]
+public class HelloWorld {
+    public static void main(String[] args) {
+        var a = Math.random();
+        // Kommentar
+        System.out.println("Hello, World!");
+    }
+}
+\end{lstlisting}
+
+% listings kann kein GLSL, das wurde neu hinzugefügt und hat deswegen kein [HTL] Präfix
+\begin{lstlisting}[language=GLSL, caption={Beispielcode in GLSL}]
+#version 330
+
+uniform float uTime;
+out vec4 fragColor;
+
+void main() {
+    vec3 color = vec3(sin(uTime), 0.0, 0.0);
+    fragColor = vec4(color, 1.0);
+}
+\end{lstlisting}
+
+\section{Bilder}\label{sec:images}
+
+Für \LaTeX{} Code siehe unten.
+
+Eine Sache: Floating specifiers, geben an wo das Bild hin soll, das ist in den eckigen Klammern nach dem \verb|\begin{figure}|.
+\begin{itemize}
+    \item Wenn man das komplett weglässt, entscheidet \LaTeX{} wo das Bild hinkommt. 
+    \item \verb|[ht]| (war früher [h]) heißt, er versucht das Bild einzufügen wo es im Code steht, wenn das nicht geht halt woanders.
+    \item \verb|[H]| das Bild wird genau dort eingefügt, wo es im Code steht. Das kann zu ungewollten Seitenumbrüchen und halbleeren Seiten führen, eure Entscheidung.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{example-image}
+    \caption{Beispielbild}\label{fig:example}
+\end{figure}
+
+Besonders wenn man das Bild nicht mit \verb|[H]| ist es sinnvoll dem Bild ein \verb|\label| zu geben und es mit einer Referenz zu erwähnen, wie in Abbildung~\ref{fig:example}.
+
+\section{Mathe}
+
+Für den Fall dass Prof.\ Schreiber eure Arbeit nicht für wertlos hält, kann man Mathe entweder inline mit \verb|$...$| schreiben oder als eigener Block mit \verb|\[...\]|.
+
+Inline-Beispiel: $a^2 + b^2 = c^2$.
+
+Block-Beispiel:
+\[
+    \int_0^1 x^2\,dx = \frac{1}{3}
+\]
+
+Ich geb hier jetzt keine weitere Erklärung wie man alle möglichen Mathe-Dinger schreibt und verweise wieder auf die \href{https://www.overleaf.com/learn/latex/Mathematical_expressions}{Overleaf Dokumentation}.
+
+\section{Zitieren}
+
+Quellen werden in \verb|.bib|-Dateien geschrieben, die dann mit \verb|\cite{...}| referenziert werden. In der Vorlage sind ein paar Beispielquellen in \verb|sources-examples.bib|. Das Format (BibTeX) in kurz:
+
+\begin{lstlisting}[caption={Beispiel für eine Quelle in BibTeX}, label={lst:bibtex-example}]
+@online{wikipedia:01, 
+    shorthand = {EX:Web01}
+    title = {Wikipedia: The Free Encyclopedia},
+    url = {https://www.wikipedia.org/},
+    urldate = {2025-10-30}
+}
+\end{lstlisting}
+
+\begin{itemize}
+    \item In \cdline{1} ist der Name der Quelle, der in \verb|\cite{}| verwendet wird, muss in der ganzen Arbeit und über alle Leute eindeutig sein.
+    \item Shorthand in \cdline{2} ist das Kürzel, das von \verb|\cite{}| angezeigt wird. Fragt euren Betreuer nach dem Format, für uns war es \verb|<Initialen(Nachname,| \verb| Vorname)>:<Art><Nummer>|, z.B. PC:Web01
+    \item Danach kommen andere Informationen über die Quelle, die sich nach art unterscheiden. Bei Online-Quellen zu beachten: \verb|urldate| in \cdline{5} ist das Datum, an dem ihr die URL abgerufen habt
+\end{itemize}
+
+Jede Person hat eine eigene \verb|sources.bib| Datei; in der Vorlage ist auch die Wiki-Quelle drin, Ein Zitat sieht dann so aus:~\cite{wikipedia:01}.
+
+\section{Referenzen}
+
+Wie man schon bei den Bildern gesehen hat kann man Referenzen mit \verb|\label| und \verb|\ref| erstellen. Das funktioniert auch für Kapitel, Sections, Tabellen, Listings, etc. Dazu schreibt man \verb|\label{<name>}| an die Stelle, bei Kapiteln und sections direkt nach dem Befehl, bei Bildern und Tabellen nach der \verb|\caption{}|, für Listings siehe \autoref{lst:bibtex-example}.
+
+Auf ein Label linken geht mit \verb|\ref{<name>}|, das wird dann automatisch durch die Nummer ersetzt. Es gibt auch \verb|\autoref{<name>}|, das wird automatisch durch den Typ ersetzt, z.B. \autoref{chap:1-intro}
+
+Labels müssen eindeutig sein und sollten ein Präfix haben, die Konvention ist:
+\begin{itemize}
+    \item \verb|chap| für Kapitel
+    \item \verb|sec| für Sections
+    \item \verb|subsec| für Subsections
+    \item \verb|subsubsec| für Subsubsections
+    \item \verb|fig| für Bilder
+    \item \verb|tab| für Tabellen
+    \item \verb|lst| für Listings
+\end{itemize}
+
+\section{Tabellen}
+
+Hier ist ein einfaches Beispiel, für den Rest, nehmts das Internet:
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{0.7\textwidth}{|c|X|c|} % chktex 44
+        \hline % chktex 44
+        Header 1 & Header 2 & Header 3 \\
+        \hline % chktex 44
+        Row 1, Col 1 & Row 1, Col 2 & Row 1, Col 3 \\
+        \hline % chktex 44
+        Row 2, Col 1 & Row 2, Col 2 & Row 2, Col 3 \\
+        \hline % chktex 44
+    \end{tabularx}
+    \caption{Beispieltabelle}\label{tab:example}
+\end{table}

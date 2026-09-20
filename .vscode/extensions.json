@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "tecosaur.latex-utilities",
+        "james-yu.latex-workshop",
+        "mathematic.vscode-latex",
+        "christian-kohler.path-intellisense"
+    ]
+}

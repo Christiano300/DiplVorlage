@@ -20,3 +20,106 @@
         \item \texttt{titel.tex} ist die Titelseite.
     \end{itemize}
 \end{itemize}
+
+\section{Empfohlene Vorgehensweise}
+
+\subsection{Am Anfang}
+
+Eine Person sollte als Verantwortlicher für das Dokument festgelegt werden, dass muss nicht der Projektleiter sein, empfohlen sind Personen mit viel Freizeit, Erfahrung mit Git oder einem sehr guten KI-Abo, ich nehme an dass niemand \LaTeX{} kann. Wenn du das bist:
+\begin{itemize}
+    \item lade dir die Vorlage herunter (wenn nicht schon), solltet ihr das auf Github sehen auch gerne Forken
+    \item überlegt euch die Reihenfolge der Personen in der Arbeit, das kann man später noch ändern aber das ist mühsam
+    \item schau in textparts/ und erstelle für jede Person ein nummeriertes Unterverzeichnis, 1 und 2 gibt es schon
+    \item geh in Diplomarbeit.tex (die Hautptdatei), such "Kapitel einfügen" und gib die neuen Kapitel rein, wenn es die Titel schon gibt auch einfügen
+    \item auch in der Hauptdatei bei "Quellen einbinden" die Quellendateien von allen Personen angeben
+    \item in \verb|abstract.tex| eine Überschrift für jede Person einfügen
+    \item in \verb|conclusion.tex| eine Überschrift für jede Person einfügen
+    \item in \verb|danksagungen.tex| das Template für jede Person einfügen (von \verb|\textbf| bis \verb|\newpage|)
+    \item in \verb|diplomandenvorstellung.tex| das Template für jede Person kopieren (von \verb|\begin{flushleft}| bis \verb|\end{tabular}| mit \verb|\newpage| dazwischen)
+    \item in \verb|erklaerung.tex| die Namen der Personen eintragen
+    \item in \verb|objective.tex| eine Überschrift für jede Person einfügen
+    \item in \verb|titel.tex| den Titel der Arbeit eintragen, und eure Namen und die der Betreuer
+    \item Kommentare tun nicht weh, lasst die Kommentare am besten drin
+    \item Die angepasste Vorlage jetzt an alle verteilen. Ich empfehle euch \emph{sehr}, mit Git + VSCode zu arbeiten (siehe \ref{subsec:0-tutorial-vscode}), sollten manche Personen das nicht wollen, gibt es auch eine Anleitung für Overleaf (siehe \ref{subsec:0-tutorial-overleaf}).
+\end{itemize}
+
+\subsection{Was jeder zu tun hat}
+
+\begin{itemize}
+    \item Jede Person schreibt ihre Kapitel in ihrem Unterverzeichnis, ich empfehle euch, die Dateien zu nummerieren, siehe dieses Beispiel. Eingebunden werden diese Kapitel in der Hauptdatei, unter eurem \verb|\part|
+    \item Jeder hat eine eigene Datei für Quellen (um euch Stundenlange merge-Konflikte zu ersparen)
+    \item Es gibt nur einen Ordner für Bilder, Unterordner sind aber empfehlenswert.
+    \item Jeder schreibt:
+    \begin{itemize}
+        \item Ein Abstrakt von seiner Diplomarbeit in \verb|abstract.tex|
+        \item Ein Fazit in \verb|conclusion.tex|
+        \item Eine Danksagung in \verb|danksagungen.tex|
+        \item Persönliche Daten und ein Bild in \verb|diplomandenvorstellung.tex|
+        \item Eine Zielsetzung (ungefähr halbe Seite) in \verb|objective.tex|
+    \end{itemize}
+\end{itemize}
+
+Diese Dinge solltet ihr vor der Abgabe auch noch doppelt und dreifach kontrollieren.
+
+\subsection{Am Schluss}
+
+Am Ende ist zu tun:
+\begin{itemize}
+    \item Die Kapitelzuordnung in \verb|chapter_assignment.tex|.
+    \item In \verb|documentation.tex| die Diplomarbeitsdokumentation einfügen, wenn ihr die Arbeit auf Englisch schreibt in beiden Sprachen.
+    \item Alles dreimal durchlesen
+    \item \emph{Wenn} ihr KI drüberlaufen lasst, \textbf{JEDE. ÄNDERUNG. ÜBERPRÜFEN.}, ist das Sinnvoll, \emph{würde ich das auch so schreiben}, verstehe ich überhautp was da steht. Mit Copilot in VSCode kann man jede Änderung sehen und akzeptieren oder ablehnen. \textbf{LEST JEDE ÄNDERUNG BEVOR IHR SIE AKZEPTIERT}. Wenn die Zeilen in VSCode zu lang werden kann man mit "Alt + Z" den Zeilenumbruch aktivieren.
+\end{itemize}
+
+\label{subsec:0-tutorial-vscode}
+\subsection{Setup mit VSCode (+ Git)}
+
+Wichtig: eine \LaTeX{} Installation ist notwendig wenn man am lokalen Rechner arbeitet und \emph{mehrere Gigabyte groß}, installieren kann dauern.
+
+Die verantwortliche Person macht ein Git Repository mit der Vorlage, und alle Klonen das. Es ist \emph{nicht notwendig}, auf eigenen Branches arbeiten, die Vorlage sollte es grundsätzlich aushalten, falsch ist das klassische Git Schema (Branch, Pull Request, Merge) aber sicher nicht.
+
+\subsubsection{Windows}
+Ladet euch \LaTeX{} über \href{https://www.tug.org/texlive/acquire-netinstall.html}{TeX Live} herunter, wenn ihr gefragt werdet welche Pakete ihr installieren wollt, nehmt "alle" oder "vollständig".
+
+Wenn ihr die Vorlage in VSCode aufmacht, bekommt ihr Extensions empfohlen, die installieren.
+
+\subsubsection{Linux}
+Es wird angenommen, dass VSCode installiert ist.
+
+\begin{lstlisting}[caption={Latex mit apt}]
+sudo apt install texlive-full
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Latex mit pacman}]
+sudo pacman -S texlive-full
+\end{lstlisting}
+
+\begin{lstlisting}[caption={VSCode Extensions}]
+code --install-extension tecosaur.latex-utilities
+code --install-extension james-yu.latex-workshop
+code --install-extension mathematic.vscode-latex
+code --install-extension christian-kohler.path-intellisens
+\end{lstlisting}
+
+\subsubsection{In VSCode wichtig}
+\begin{itemize}
+    \item Im Code "Strg + Alt + J" öffnet das Dokument an der Stell vom Cursor.
+    \item andersherum, im Dokument "Strg + Klick" öffnet die Stelle im Code.
+    \item Der \TeX-Reiter an der linken Seite hat nützliche Kommands, eine Übersicht über das Dokument, und Mathe-Symbole
+\end{itemize}
+
+\label{subsec:0-tutorial-overleaf}
+\subsection{Setup mit Overleaf}
+Die Verantwortliche Person erstellt ein Zip-Archiv der Vorlage und schickt es den Personen, die auf Overleaf arbeiten. Overleaf erlaubt Zusammenarbeit im Gratis-Tier nur für zwei Personen, ist also dafür nicht gedacht.
+
+In Overleaf gibt es Buttons zum wechseln zwischen Code und Dokument, alternativ auch Doppelklich im Dokument, um die Stelle im Code zu öffnen, und "Strg + Enter" um neuzukompilieren.
+
+Ich empfehle, nur die eigentliche Arbeit in Overleaf zu schreiben und die anderen Teile (Abstrakt, Fazit, etc.) später in VSCode einzufügen. Dazu sollte auch kein installiertes \LaTeX{} notwendig sein.
+
+Wenn die Arbeit von Overleaf zusammengeführ werden soll, muss theoritisch nur das nummerierte Unterverzeichnis eingefügt werden, Kapitel und Quellen eingebunden, und die anderen Teile ergänzt werden.
+
+\section{Sonstiges}
+
+\makeatletter
+Sollte es Fragen oder Verbesserungsvorschläge an der Vorlage geben, könnt ihr mich unter \href{mailto:christian.patzl@gmx.net}{christian.patzl@gmx.net} anschreiben, erwartet nicht, dass ich in einer Woche antworte. Andernfalls sucht jemanden, der jemanden kennt, der mich noch kennt, oder erstellt ein Issue auf \href{https://github.com/Christiano300/DiplVorlage}{Github}.
+\makeatother

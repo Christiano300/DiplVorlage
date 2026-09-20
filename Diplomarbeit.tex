@@ -5,6 +5,7 @@
 % \documentclass[a4paper, 12pt, chapterprefix=true, numbers=noenddot, BCOR=20mm, DIV=10]{scrreprt} 
 
 \raggedbottom{} % Erlaubt unterschiedlich hohe Seiten
+\usepackage{ngerman} % Deutsch
 \usepackage{longtable} % Lange Tabellen über mehrere Seiten
 \usepackage{enumitem} % Wird von der Vorlage verwendet, um die Abstände in Listen zu ändern
 \usepackage[table]{xcolor} % Farbige Tabellen
@@ -108,7 +109,7 @@
 \setcounter{page}{1} % Bei 1 mit Nummerierung beginnen
 
 \phantomsection{} % Damit Hyperref die Seitenzahl korrekt verlinkt, vor jedem \addcontentsline
-\addcontentsline{toc}{chapter}{Foreword} % Manuell einen Eintrag ins Inhaltsverzeichnis einfügen
+\addcontentsline{toc}{chapter}{Vorwort} % Manuell einen Eintrag ins Inhaltsverzeichnis einfügen
 
 \phantomsection{}
 \addcontentsline{toc}{section}{Erklärung}
@@ -120,8 +121,13 @@
 \input{textparts/diplomandenvorstellung}
 
 \phantomsection{}
-\addcontentsline{toc}{section}{Acknowledgements}
+\addcontentsline{toc}{section}{Danksagungen}
 \input{textparts/danksagungen}
+\cleardoublepage{}
+
+\phantomsection{}
+\addcontentsline{toc}{section}{Zusammenfassung}
+\input{textparts/zusammenfassung}
 \cleardoublepage{}
 
 \phantomsection{}
@@ -130,10 +136,10 @@
 \cleardoublepage{}
 
 % Inhaltverzeichnis
-\renewcommand{\contentsname}{Table of Contents}
-\renewcommand{\chaptername}{Chapter}
+\renewcommand{\contentsname}{Inhaltsverzeichnis}
+\renewcommand{\chaptername}{Kapitel}
 \phantomsection{}
-\addcontentsline{toc}{chapter}{Table of Contents}
+\addcontentsline{toc}{chapter}{Inhaltsverzeichnis}
 \tableofcontents
 \cleardoublepage{}
 
@@ -181,13 +187,13 @@
 \include{textparts/0/1_latex}
 \include{textparts/0/2_vorlage}
 % END: Tutorial + Erklärung, LÖSCHEN WENN NICHT BENÖTIGT
-% 1's diploma thesis
-\part[First thesis title]
-{First thesis title\\\large by Person 1}
+% Diplomarbeit von Person 1
+\part[Titel der ersten Arbeit]
+{Titel der ersten Arbeit\\\large von Person 1}
 \include{textparts/1/1_introduction}
-% 2's diploma thesis
-\part[Second thesis title]
-{Second thesis title\\\large by Person 2}
+% Diplomarbeit von Person 2
+\part[Titel der zweiten Arbeit]
+{Titel der zweiten Arbeit\\\large von Person 2}
 \include{textparts/2/1_introduction}
 
 \input{textparts/conclusion}
@@ -197,43 +203,43 @@
 %--------------------------------------------------------------------------
 
 \phantomsection{}
-\addcontentsline{toc}{chapter}{Appendix}
+\addcontentsline{toc}{chapter}{Anhang}
 
-\markright{List of Figures}
+\markright{Abbildungsverzeichnis}
 \phantomsection{}
-\addcontentsline{toc}{section}{List of Figures}
+\addcontentsline{toc}{section}{Abbildungsverzeichnis}
 \listoffigures
 \cleardoublepage{}
 
-\markright{List of Tables}
+\markright{Tabellenverzeichnis}
 \phantomsection{}
-\addcontentsline{toc}{section}{List of Tables}
+\addcontentsline{toc}{section}{Tabellenverzeichnis}
 \listoftables
 \cleardoublepage{}
 
-\markright{List of Listings}
+\markright{Listings}
 \phantomsection{}
-\addcontentsline{toc}{section}{List of Listings}
+\addcontentsline{toc}{section}{Listings}
 \lstlistoflistings{}
 \cleardoublepage{}
 
 \phantomsection{}
-\printbibliography[heading=bibintoc, title={Bibliography}]
+\printbibliography[heading=bibintoc, title={Quellenverzeichnis}]
 \clearpage{}
 
 \begingroup
 \enlargethispage{5cm}
-\markright{Chapter Assignment}
+\markright{Kapitelzuordnung}
 \input{textparts/chapter_assignment}
 \cleardoublepage{}
 \endgroup
 
-\markright{Documentation}
+\markright{Dokumentation}
 \input{textparts/documentation}
 \cleardoublepage{}
 
 % Zeiterfassung einbinden
-\markright{Time Tracking}
+\markright{Zeiterfassung}
 \input{textparts/1/zeiterfassung.tex}
 \newpage{}
 \input{textparts/2/zeiterfassung.tex}

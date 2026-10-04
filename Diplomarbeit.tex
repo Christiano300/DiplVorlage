@@ -31,7 +31,12 @@
 \usepackage{tabularx} % Bessere Tabellen
 \usepackage{amsmath} % Mathe
 \usepackage{amsfonts} % Mathe
-\usepackage[backend=biber,style=alphabetic]{biblatex} % Quellenangaben
+
+% Zitierstil auswählen, Erklärung im Tutorial-Kapitel "Zitieren":
+%   htl        -> Zitierregeln für Diplomarbeiten: (Hoffmann, 2020, S. 45)
+%   alphabetic -> Kürzel aus dem shorthand-Feld:  [PC:Web01]
+\newcommand{\zitierstil}{htl}
+\input{citation-config.tex} % Quellenangaben (biblatex)
 
 % Quellen einbinden
 \addbibresource{textparts/0/sources.bib} % Quelle für Tutorial, LÖSCHEN WENN NICHT BENÖTIGT

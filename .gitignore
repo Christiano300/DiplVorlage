@@ -1,5 +1,6 @@
 # Ignore generated PDFs
 *.pdf
+!zitierregeln.pdf
 
 # LaTeX intermediate and build files
 *.aux

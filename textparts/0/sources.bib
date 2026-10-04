@@ -1,7 +1,78 @@
-% Beispiel, Wikipedia darf nicht als Quelle verwendet werden, rausnehmen
+% Beispielquellen für das Tutorial, rausnehmen
+% Die Beispiele (außer Wikipedia) stammen aus den Zitierregeln und sind erfunden.
+% Alle Einträge funktionieren mit beiden Zitierstilen (\zitierstil htl / alphabetic).
+
+% Wikipedia darf nicht als Quelle verwendet werden
 @online{wikipedia:01,
     shorthand = {EX:Web01},
+    author = {{Wikipedia}},
     title = {Wikipedia: The Free Encyclopedia},
     url = {https://www.wikipedia.org/},
+    addendum = {Website},
     urldate = {2025-10-30}
+}
+
+% Monographie, ein Autor
+@book{riesenhuber:01,
+    shorthand = {EX:Book01},
+    author = {Riesenhuber, Gerd},
+    title = {Netzwerkinstallation leicht gemacht},
+    edition = {3},
+    location = {Graz},
+    year = {2022}
+}
+
+% Monographie, zwei Autoren
+@book{gitschthaler:01,
+    shorthand = {EX:Book02},
+    author = {Gitschthaler, Werner and Hoffmann, Thomas},
+    title = {Erweiterte Programmierung},
+    location = {St. Pölten},
+    year = {2023}
+}
+
+% Monographie, mehrere Autoren, mit DOI
+@book{hoffmann:01,
+    shorthand = {EX:Book03},
+    author = {Hoffmann, Thomas and Gitschthaler, Werner and Reichel, Franz},
+    title = {Diplomarbeiten einfach verfassen},
+    location = {St. Pölten},
+    year = {2025},
+    doi = {10.25365/thesis.31563}
+}
+
+% Fachzeitschrift
+@article{reichel:01,
+    shorthand = {EX:Paper01},
+    author = {Reichel, Franz},
+    title = {Robotik in der HTL},
+    journaltitle = {Fachdidaktik der Informatik},
+    number = {2/2023},
+    year = {2025},
+    doi = {10.654321/thesis.12345},
+    pages = {34--51}
+}
+
+% Kapitel in einem Sammelband
+@incollection{hoffmann:02,
+    shorthand = {EX:Book04},
+    author = {Hoffmann, Thomas},
+    title = {SQL für Fortgeschrittene},
+    editor = {Gitschthaler, Werner},
+    booktitle = {Didaktik der Informatik},
+    location = {St. Johann im Pongau},
+    year = {2022},
+    doi = {10.654321/thesis.12345},
+    pages = {312--333}
+}
+
+% Internetquelle: date = Erscheinungsdatum, urldate = Zugriff am, addendum = Typ
+@online{schreiber:01,
+    shorthand = {EX:Web02},
+    author = {Schreiber, Christoph},
+    title = {Grundlagen der Artificial Intelligence},
+    date = {2024-12-02},
+    url = {http://www.htlstp.ac.at/aibasics},
+    addendum = {Online-Artikel},
+    urldate = {2026-09-27}
 }

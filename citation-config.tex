@@ -1,0 +1,92 @@
+% Zitierstil-Konfiguration
+% Der Stil wird in Diplomarbeit.tex mit \zitierstil ausgewählt:
+%   htl        -> Zitierregeln für Diplomarbeiten (Amerikanische Zitierweise),
+%                 im Text: (Hoffmann, 2020, S. 45)
+%   alphabetic -> Kürzel aus dem shorthand-Feld, im Text: [PC:Web01]
+% Erklärung siehe textparts/0/1_latex.tex, Abschnitt "Zitieren".
+
+\usepackage{etoolbox}
+
+\ifdefstring{\zitierstil}{htl}{%
+  %---------------------------------------------------------------------------
+  % HTL-Zitierregeln (Autor, Jahr)
+  %---------------------------------------------------------------------------
+  \usepackage[backend=biber, style=authoryear,
+              maxcitenames=2, mincitenames=1, maxbibnames=99,
+              uniquename=false, uniquelist=false, labeldate=year, mergedate=basic,
+              date=short, urldate=short, isbn=false]{biblatex}
+  % Zitate und Literaturverzeichnis auf Deutsch ("S.", "Hrsg.", Datum 02.12.2024),
+  % auch wenn der Rest der Arbeit Englisch ist
+  \DeclareLanguageMapping{english}{german}
+
+  % shorthand und publisher werden ignoriert, damit dieselben .bib-Dateien
+  % für beide Stile funktionieren (shorthand würde sonst (Autor, Jahr) ersetzen)
+  \DeclareSourcemap{
+    \maps[datatype=bibtex]{
+      \map{
+        \step[fieldset=shorthand, null]
+        \step[fieldset=publisher, null]
+      }
+    }
+  }
+
+  % Im Text: (Hoffmann, 2020, S. 45)
+  \renewcommand*{\nameyeardelim}{\addcomma\space}
+
+  % Im Verzeichnis: Nachname, Vorname bei allen Autoren
+  \DeclareNameAlias{sortname}{family-given}
+  \DeclareNameAlias{default}{family-given}
+
+  % Zwei Autoren mit "und", ab drei Autoren mit "; "
+  \renewcommand*{\multinamedelim}{\addsemicolon\space}
+  \renewcommand*{\finalnamedelim}{%
+    \ifnumgreater{\value{liststop}}{2}{\addsemicolon\space}{\addspace und\space}}
+
+  % Teile mit Komma trennen, Titel nicht kursiv, Aufsätze in Anführungszeichen
+  \renewcommand*{\newunitpunct}{\addcomma\space}
+  \DeclareFieldFormat*{title}{#1}
+  \DeclareFieldFormat[article,incollection,inbook,inproceedings]{title}{\mkbibquote{#1}}
+  \DeclareFieldFormat*{journaltitle}{#1}
+  \DeclareFieldFormat*{booktitle}{#1}
+  \DeclareFieldFormat*{maintitle}{#1}
+  \DeclareFieldFormat{doi}{\url{https://doi.org/#1}}
+  \DeclareFieldFormat{url}{\url{#1}}
+  \DeclareFieldFormat{urldate}{\bibstring{urlseen}\space#1}
+  \renewcommand*{\finentrypunct}{}               % kein Punkt am Ende
+
+  % Zeitschrift: Name der Zeitschrift, 2/2023
+  \renewbibmacro*{volume+number+eid}{%
+    \setunit{\addcomma\space}%
+    \printfield{volume}\setunit*{\adddot}\printfield{number}%
+    \setunit{\bibeidpunct}\printfield{eid}}
+
+  % Sammelband: In: Nachname, Vorname (Hrsg.), Titel; Zeitschrift ohne "In:"
+  \renewbibmacro*{in:}{%
+    \ifentrytype{article}{}{%
+      \bibstring{in}\intitlepunct
+      \ifnameundef{editor}{}{%
+        \printnames{editor}\addspace\mkbibparens{\bibstring{editor}}%
+        \clearname{editor}\newunit}}}
+
+  % Internetquelle: Weblink, Typ, Zugriff am: Datum
+  \renewbibmacro*{url+urldate}{%
+    \usebibmacro{url}%
+    \ifentrytype{online}{\newunit\printfield{addendum}\clearfield{addendum}}{}%
+    \iffieldundef{urlyear}{}{\newunit\usebibmacro{urldate}}}
+
+  % für englische (english -> german, siehe oben) und deutsche Arbeiten
+  \newcommand{\htlbibstrings}[1]{%
+    \DefineBibliographyStrings{#1}{
+      edition   = {Auflage},
+      volume    = {Band},
+      in        = {In},
+      urlseen   = {Zugriff am:},
+      andothers = {et\addabbrvspace al\adddot},
+    }}
+  \forcsvlist{\htlbibstrings}{english,german,ngerman}
+}{%
+  %---------------------------------------------------------------------------
+  % Kürzel (alphabetic), z.B. [PC:Web01]
+  %---------------------------------------------------------------------------
+  \usepackage[backend=biber, style=alphabetic]{biblatex}
+}

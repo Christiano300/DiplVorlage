@@ -111,24 +111,79 @@ Ich geb hier jetzt keine weitere Erklärung wie man alle möglichen Mathe-Dinger
 
 \section{Zitieren}
 
-Quellen werden in \verb|.bib|-Dateien geschrieben, die dann mit \verb|\cite{...}| referenziert werden. In der Vorlage sind ein paar Beispielquellen in \verb|sources-examples.bib|. Das Format (BibTeX) in kurz:
+Quellen werden in \verb|.bib|-Dateien geschrieben, die dann mit \verb|\parencite{...}| referenziert werden. In der Vorlage sind ein paar Beispielquellen in \verb|sources-examples.bib| und \verb|textparts/0/sources.bib|. Das Format (BibTeX) in kurz:
 
 \begin{lstlisting}[caption={Beispiel für eine Quelle in BibTeX}, label={lst:bibtex-example}]
-@online{wikipedia:01, 
-    shorthand = {EX:Web01}
-    title = {Wikipedia: The Free Encyclopedia},
-    url = {https://www.wikipedia.org/},
-    urldate = {2025-10-30}
+@online{schreiber:01,
+    shorthand = {EX:Web02},
+    author = {Schreiber, Christoph},
+    title = {Grundlagen der Artificial Intelligence},
+    date = {2024-12-02},
+    url = {http://www.htlstp.ac.at/aibasics},
+    addendum = {Online-Artikel},
+    urldate = {2026-09-27}
 }
 \end{lstlisting}
 
 \begin{itemize}
-    \item In \cdline{1} ist der Name der Quelle, der in \verb|\cite{}| verwendet wird, muss in der ganzen Arbeit und über alle Leute eindeutig sein.
-    \item Shorthand in \cdline{2} ist das Kürzel, das von \verb|\cite{}| angezeigt wird. Fragt euren Betreuer nach dem Format, für uns war es \verb|<Initialen(Nachname,| \verb| Vorname)>:<Art><Nummer>|, z.B. PC:Web01
-    \item Danach kommen andere Informationen über die Quelle, die sich nach art unterscheiden. Bei Online-Quellen zu beachten: \verb|urldate| in \cdline{5} ist das Datum, an dem ihr die URL abgerufen habt
+    \item In \cdline{1} ist die Art der Quelle (\verb|@online|, \verb|@book|, \verb|@article|, \verb|@incollection|, \dots) und der Name der Quelle, der in \verb|\parencite{}| verwendet wird. Der Name muss in der ganzen Arbeit und über alle Leute eindeutig sein.
+    \item Shorthand in \cdline{2} ist das Kürzel, das beim Stil \texttt{alphabetic} angezeigt wird (siehe unten). Beim Stil \texttt{htl} wird es ignoriert.
+    \item Danach kommen andere Informationen über die Quelle, die sich nach Art unterscheiden. Bei Online-Quellen zu beachten: \verb|date| ist das Erscheinungsdatum, \verb|urldate| in \cdline{8} ist das Datum, an dem ihr die URL abgerufen habt.
 \end{itemize}
 
-Jede Person hat eine eigene \verb|sources.bib| Datei; in der Vorlage ist auch die Wiki-Quelle drin, Ein Zitat sieht dann so aus:~\cite{wikipedia:01}.
+Jede Person hat eine eigene \verb|sources.bib| Datei. Ein Zitat sieht dann so aus:~\parencite{schreiber:01}.
+
+\subsection{Zitierstil auswählen}
+
+Die Vorlage kann zwei Zitierstile. Welcher verwendet wird, stellt man in \verb|Diplomarbeit.tex| mit einer Zeile ein, die eigentliche Konfiguration ist in \verb|citation-config.tex|:
+
+\begin{lstlisting}[caption={Zitierstil in Diplomarbeit.tex auswählen}, label={lst:zitierstil}]
+\newcommand{\zitierstil}{htl}        % (Hoffmann, 2020, S. 45)
+\newcommand{\zitierstil}{alphabetic} % [PC:Web01, S. 45]
+\end{lstlisting}
+
+\begin{itemize}
+    \item \textbf{\texttt{htl}} (Standard): Die Zitierregeln für Diplomarbeiten der Schule (Amerikanische Zitierweise). Im Text steht (Nachname, Jahr, S.~XXX), im Literaturverzeichnis Nachname, Vorname (Jahr), Titel, \dots
+    \item \textbf{\texttt{alphabetic}}: Im Text steht das Kürzel aus dem \verb|shorthand|-Feld in eckigen Klammern. Fragt euren Betreuer nach dem Format, für uns war es \verb|<Initialen(Nachname,| \verb| Vorname)>:<Art><Nummer>|, z.B. PC:Web01.
+\end{itemize}
+
+Damit man jederzeit wechseln kann, sollten die Quellen für beide Stile vollständig sein: immer \verb|shorthand|, \verb|author| und \verb|year| bzw.\ \verb|date| angeben, und immer \verb|\parencite| statt \verb|\cite| verwenden (\verb|\cite| setzt beim Stil \texttt{htl} keine Klammern). Nach dem Umstellen muss biber neu laufen, am einfachsten die Hilfsdateien (\verb|.aux|, \verb|.bbl|, \verb|.bcf|) löschen.
+
+\subsection{Zitieren im Text}
+
+Die Seitenzahl kommt in die ecigen Klammern nach \verb|\parencite|, ein Text davor (z.B.\ \enquote{vergleiche:}) in ein zusätzliches Klammerpaar davor. Beispiele für die Zitierregeln:
+
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.17\textwidth} >{\raggedright\arraybackslash}p{0.4\textwidth} >{\raggedright\arraybackslash}p{0.35\textwidth}}
+    \toprule
+    \textbf{Fall} & \textbf{Code} & \textbf{Ergebnis} \\
+    \midrule
+    Direktes Zitat & \verb|\parencite[45]| \verb|{gitschthaler:01}| & \parencite[45]{gitschthaler:01} \\
+    Indirektes Zitat & \verb|\parencite[vergleiche:]| \verb|[45]{gitschthaler:01}| & \parencite[vergleiche:][45]{gitschthaler:01} \\
+    Zitat eines Zitats & \verb|\parencite[zitiert nach:]| \verb|[45]{gitschthaler:01}| & \parencite[zitiert nach:][45]{gitschthaler:01} \\
+    Ein Autor & \verb|\parencite[12]| \verb|{riesenhuber:01}| & \parencite[12]{riesenhuber:01} \\
+    Mehrere Autoren & \verb|\parencite[102]| \verb|{hoffmann:01}| & \parencite[102]{hoffmann:01} \\
+    Zwei Seiten & \verb|\parencite[\pno~132f]| \verb|{reichel:01}| & \parencite[\pno~132f]{reichel:01} \\
+    Mehrere Seiten & \verb|\parencite[198-202]| \verb|{hoffmann:02}| & \parencite[198-202]{hoffmann:02} \\
+    \bottomrule
+    \caption{Zitieren im Text}
+    \label{tab:zitieren}
+\end{longtable}}
+
+Bei zwei Seiten (\enquote{132f}) muss \verb|\pno~| davor stehen, sonst fehlt das \enquote{S.}, weil biblatex \enquote{132f} nicht als Seitenzahl erkennt. Mehrere Quellen eines Autors im selben Jahr bekommen automatisch einen Buchstaben (2026a, 2026b).
+
+\subsection{Literaturverzeichnis}
+
+Das Literaturverzeichnis wird automatisch aus den Feldern erstellt, man muss nur die richtigen Felder angeben. Für den Stil \texttt{htl}:
+
+\begin{itemize}
+    \item \textbf{Monographien} (\verb|@book|): \verb|author|, \verb|title|, \verb|year|, \verb|location| (Ort), optional \verb|volume| (Band), \verb|edition| (Auflage, nur die Zahl) und \verb|doi|. Ein \verb|publisher| wird ignoriert, laut Zitierregeln wird nur der Ort angegeben.
+    \item \textbf{Fachzeitschriften} (\verb|@article|): zusätzlich \verb|journaltitle|, \verb|number| (z.B.\ \verb|2/2023|) und \verb|pages| (z.B.\ \verb|34--51|).
+    \item \textbf{Sammelbände} (\verb|@incollection|): zusätzlich \verb|editor| (Hrsg.), \verb|booktitle| und \verb|pages|.
+    \item \textbf{Internetquellen} (\verb|@online|): \verb|author| (bei Websites der Name der Website in doppelten Klammern, z.B.\ \verb|{{Informatik-Forum.at}}|), \verb|title|, \verb|date|, \verb|url|, \verb|urldate| und in \verb|addendum| der Typ: Online-Artikel, Website, Video, Podcast, Hörbuch, E-Book, Software, Datensatz oder Code.
+\end{itemize}
+
+Mehrere Autoren werden mit \verb|and| getrennt (\verb|author = {Gitschthaler, Werner and Hoffmann, Thomas}|), die Vorlage macht daraus \enquote{und} bzw.\ \enquote{;}. Beispiele für alle Arten sind in \verb|textparts/0/sources.bib|, wie sie aussehen sieht man im Literaturverzeichnis am Ende dieses Dokuments.
 
 \section{Referenzen}
 
